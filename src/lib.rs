@@ -1,0 +1,11 @@
+pub mod patterns;
+pub mod hasher;
+pub mod finalizable;
+pub mod enc_dec;
+pub mod comp_decomp_2;
+pub mod fixed_size_writer;
+pub mod joiner;
+pub mod multi_files_reader;
+pub mod buffered_reader;
+pub mod stats;
+pub mod arg_opts;
