@@ -13,12 +13,8 @@ use bigarchiver::buffered_reader::BufferedReader;
 use bigarchiver::stats::Stats;
 use bigarchiver::arg_opts::{ArgOpts, ArgModeSpecificOpts};
 use bigarchiver::patterns::cfg_from_pattern;
-
-mod splitter;
-use splitter::Splitter;
-
-mod multi_files_writer;
-use multi_files_writer::MultiFilesWriter;
+use bigarchiver::splitter::Splitter;
+use bigarchiver::multi_files_writer::MultiFilesWriter;
 
 fn backup(
     auth: &str, auth_every_bytes: usize, split_size_bytes: usize, out_template: &str, 

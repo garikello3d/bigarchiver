@@ -9,3 +9,5 @@ pub mod multi_files_reader;
 pub mod buffered_reader;
 pub mod stats;
 pub mod arg_opts;
+pub mod multi_files_writer;
+pub mod splitter;

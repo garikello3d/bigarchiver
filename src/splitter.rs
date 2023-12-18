@@ -1,6 +1,6 @@
-use bigarchiver::patterns::{analyze_pattern, gen_chunk_path, gen_cfg_path};
-use bigarchiver::finalizable::DataSink;
-use bigarchiver::stats::Stats;
+use crate::patterns::{analyze_pattern, gen_chunk_path, gen_cfg_path};
+use crate::finalizable::DataSink;
+use crate::stats::Stats;
 
 pub trait MultiFilesWriterTarget {
     fn open_next_file(&mut self, full_path: &str) -> Result<(), String>;
