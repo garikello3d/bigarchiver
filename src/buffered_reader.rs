@@ -48,6 +48,7 @@ impl<'a, R: Read, T: DataSink> BufferedReader<'a, R, T> {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use std::io::Read;
     use rand::{thread_rng, Rng, RngCore};

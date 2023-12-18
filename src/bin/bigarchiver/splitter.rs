@@ -1,5 +1,3 @@
-use std::io::{Write, ErrorKind};
-use std::sync::Arc;
 use bigarchiver::patterns::{analyze_pattern, gen_chunk_path, gen_cfg_path};
 use bigarchiver::finalizable::DataSink;
 use bigarchiver::stats::Stats;
@@ -58,10 +56,6 @@ impl<'a, T: MultiFilesWriterTarget> Splitter<'a, T> {
     }
 }
 
-fn str2ioerr(s_err: String) -> std::io::Error {
-    std::io::Error::new(ErrorKind::Other, s_err)
-}
-
 impl<'a, T: MultiFilesWriterTarget> DataSink for Splitter<'a, T> {
     fn add(&mut self, data: &[u8]) -> Result<(), String> {
         eprintln!("Splitter: writing {} bytes", data.len());
@@ -100,6 +94,7 @@ impl<'a, T: MultiFilesWriterTarget> DataSink for Splitter<'a, T> {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
     //use std::io::Write;

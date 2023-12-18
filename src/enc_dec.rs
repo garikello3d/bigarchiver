@@ -1,22 +1,15 @@
 use ring::error::Unspecified;
-// use ring::rand::SecureRandom;
-// use ring::rand::SystemRandom;
-// use ring::aead::Algorithm;
 use ring::aead::AES_128_GCM;
 use ring::aead::UnboundKey;
 use ring::aead::BoundKey;
 use ring::aead::SealingKey;
 use ring::aead::OpeningKey;
 use ring::aead::Aad;
-//use ring::aead::Tag;
 use ring::aead::NonceSequence;
 use ring::aead::NONCE_LEN;
 use ring::aead::Nonce;
 use ring::pbkdf2;
-
-//use std::io::Write;
 use std::num::NonZeroU32;
-
 use crate::finalizable::DataSink;
 
 fn create_unbound_key(pass_str: &str) -> UnboundKey {
@@ -107,8 +100,8 @@ impl NonceSequence for NonceFromCounter {
     }
 }
 
+#[cfg(test)]
 mod tests {
-    use std::io::Write;
     use super::*;
 
     struct CipherReceiver(Vec<u8>);
@@ -139,7 +132,7 @@ mod tests {
         }
     }
 
-    fn as_hex(data: &[u8]) -> String {
+    fn _as_hex(data: &[u8]) -> String {
         let mut s = String::new();
         for d in data {
             s.push_str(format!("{d:02x} ").as_str());

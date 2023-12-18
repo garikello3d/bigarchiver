@@ -81,6 +81,7 @@ pub fn gen_chunk_path(patt_str: &str, nr: usize, patt_offs: usize, patt_size: us
     Ok(out)
 }
 
+#[cfg(test)]
 mod tests {
     use crate::patterns::{analyze_pattern, gen_chunk_path, pattern_from_cfg, cfg_from_pattern};
 

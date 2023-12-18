@@ -53,6 +53,7 @@ impl MultiFilesWriterTarget for MultiFilesWriter {
 
 }
 
+#[cfg(test)]
 mod tests {
     use crate::{multi_files_writer::MultiFilesWriter, splitter::MultiFilesWriterTarget};
     use std::fs;

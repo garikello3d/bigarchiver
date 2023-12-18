@@ -60,7 +60,7 @@ fn backup(
 }
 
     
-fn check(restore: bool, cfg_path: &str, pass: &str, buf_size_bytes: usize, check_free_space: bool) -> Result<(), String> {
+fn check(restore: bool, cfg_path: &str, pass: &str, buf_size_bytes: usize, _check_free_space: bool) -> Result<(), String> {
     struct StdoutWriter;
 
     impl DataSink for StdoutWriter {

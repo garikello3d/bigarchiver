@@ -77,6 +77,7 @@ impl<'a, T: DataSink> DataSink for Decompressor2<'a, T> {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use crate::finalizable::DataSink;
     use super::{Compressor2, Decompressor2};
@@ -101,7 +102,7 @@ mod tests {
     struct NullSink;
 
     impl DataSink for NullSink {
-        fn add(&mut self, data: &[u8]) -> Result<(), String> { Ok(()) }
+        fn add(&mut self, _: &[u8]) -> Result<(), String> { Ok(()) }
         fn finish(&mut self) -> Result<(), String> { Ok(()) }
     }
 

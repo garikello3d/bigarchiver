@@ -168,6 +168,7 @@ impl ArgOpts {
     }
 }
 
+#[cfg(test)]
 mod tests {
     use super::*;
     use std::ffi::OsString;
@@ -247,13 +248,13 @@ mod tests {
                     buf_size: 10485760,
                     mode_specific_opts: ArgModeSpecificOpts::Restore {
                         config_path: "configval".to_owned(),
-                        no_check: true,
+                        no_check: false,
                         no_check_free_space: true
                     }
             });
         assert_eq!(
             ArgOpts::from_os_args(&to_os(&vec![
-                "--restore", "--config", "configval", "--pass", "passval", "--buf-size", "10"
+                "--restore", "--config", "configval", "--pass", "passval", "--buf-size", "10", "--no-check"
                 ])).unwrap(),
             ArgOpts{
                     pass: "passval".to_owned(),

@@ -52,15 +52,17 @@ impl<T: DataSink> DataSink for FixedSizeWriter<T> {
     }
 }
 
-impl<T: DataSink> FixedSizeWriter<T> {
-    fn internal_buf(&self) -> &[u8] {
-        &self.buf
-    }
-}
 
+#[cfg(test)]
 mod tests {
     use super::*;
 
+    impl<T: DataSink> FixedSizeWriter<T> {
+        fn internal_buf(&self) -> &[u8] {
+            &self.buf
+        }
+    }
+    
     struct TestOut {
         actual_writes: Vec<Vec<u8>>,
         expected_writes: Vec<Vec<u8>>,
@@ -87,7 +89,7 @@ mod tests {
 
     fn write_xx(buf_size: usize, in_writes: &[&[u8]], out_writes: &[&[u8]]) {
         let out = TestOut{ actual_writes: Vec::new(), expected_writes: conv(out_writes) };
-        let mut fsw = FixedSizeWriter::<TestOut>::new(out, 3);
+        let mut fsw = FixedSizeWriter::<TestOut>::new(out, buf_size);
         for iw in in_writes {
             fsw.add(&iw).unwrap();
         }

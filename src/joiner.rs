@@ -133,6 +133,7 @@ pub fn read_metadata<R: MultiFilesReaderSource>(metadata_path: &str) -> Result<S
     }
 }
 
+#[cfg(test)]
 mod tests {
     use std::collections::{BTreeMap, HashSet};
     use crate::{joiner::{Joiner, MultiFilesReaderSource, read_metadata}, finalizable::DataSink};
@@ -166,7 +167,7 @@ mod tests {
 
         fn read_from_current_file(&mut self, buf: &mut [u8]) -> Result<usize, String> {
             //eprintln!("read_from_current_file([ {} bytes buf ])", buf.len());
-            let (file_name, (data, opt_offs)) = self.data.iter_mut()
+            let (_file_name, (data, opt_offs)) = self.data.iter_mut()
                 .find(|d| d.1.1.is_some())
                 .ok_or("no opened files to read from".to_owned())?;
             let offs = opt_offs.unwrap(); // SAFE because otherwise would've returned from line above
@@ -189,7 +190,7 @@ mod tests {
             Ok(())
         }
 
-        fn read_single_file(full_path: &str) -> Result<Vec<u8>, String> {
+        fn read_single_file(_: &str) -> Result<Vec<u8>, String> {
             Ok(b"\
             in_len=12345\n\
             in_hash=abcde\n\
@@ -258,7 +259,7 @@ mod tests {
     #[test]
     fn first_open_err() {
         { // error opening
-            let mut src = TestReaderSource{ data: BTreeMap::new(), failed_files: HashSet::from(["failed_file".to_owned()]) };
+            let src = TestReaderSource{ data: BTreeMap::new(), failed_files: HashSet::from(["failed_file".to_owned()]) };
             let mut dst = TestReaderTarget::new();
             let mut j = Joiner::from_pattern(src, &mut dst, "file%%%", 3).unwrap();
             let r = j.read_and_write_all();
@@ -266,7 +267,7 @@ mod tests {
             assert!(dst.data.is_empty());
         }
         { // not found
-            let mut src = TestReaderSource{ data: BTreeMap::new(), failed_files: HashSet::new() };
+            let src = TestReaderSource{ data: BTreeMap::new(), failed_files: HashSet::new() };
             let mut dst = TestReaderTarget::new();
             let mut j = Joiner::from_pattern(src, &mut dst, "file%%%", 3).unwrap();
             let r = j.read_and_write_all();
