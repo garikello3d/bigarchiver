@@ -39,7 +39,7 @@ impl<'a, T: DataSink> Encryptor<'a, T> {
 
 impl<'a, T: DataSink> DataSink for Encryptor<'a, T> {
     fn add(&mut self, data: &[u8]) -> Result<(), String> {
-        eprintln!("Encryptor: writing {} bytes", data.len());
+        //eprintln!("Encryptor: writing {} bytes", data.len());
         let mut inout_buf = data.to_vec().clone();
         self.sealing_key
             .seal_in_place_append_tag(self.assoc_data.clone(), &mut inout_buf)
@@ -48,7 +48,7 @@ impl<'a, T: DataSink> DataSink for Encryptor<'a, T> {
     }
 
     fn finish(&mut self) -> Result<(), String> {
-        eprintln!("Encryptor: finish");
+        //eprintln!("Encryptor: finish");
         self.write_to.finish()
     }
 }
@@ -71,7 +71,7 @@ impl<'a, T: DataSink> Decryptor<'a, T> {
 
 impl<'a, T: DataSink> DataSink for Decryptor<'a, T> {
     fn add(&mut self, data: &[u8]) -> Result<(), String> {
-        eprintln!("Decryptor: writing {} bytes", data.len());
+        //eprintln!("Decryptor: writing {} bytes", data.len());
         let mut inout_buf = data.to_vec().clone();
         let out_ref = self.opening_key
             .open_in_place(self.assoc_data.clone(), &mut inout_buf)
@@ -80,7 +80,7 @@ impl<'a, T: DataSink> DataSink for Decryptor<'a, T> {
     }
 
     fn finish(&mut self) -> Result<(), String> {
-        eprintln!("Decryptor: finish");
+        //eprintln!("Decryptor: finish");
         self.write_to.finish()
     }
 }

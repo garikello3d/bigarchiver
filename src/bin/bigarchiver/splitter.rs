@@ -58,7 +58,7 @@ impl<'a, T: MultiFilesWriterTarget> Splitter<'a, T> {
 
 impl<'a, T: MultiFilesWriterTarget> DataSink for Splitter<'a, T> {
     fn add(&mut self, data: &[u8]) -> Result<(), String> {
-        eprintln!("Splitter: writing {} bytes", data.len());
+        //eprintln!("Splitter: writing {} bytes", data.len());
         let mut left_for_data: usize = data.len();
         let mut offs_for_data = 0;
         while left_for_data > 0 {
@@ -86,7 +86,7 @@ impl<'a, T: MultiFilesWriterTarget> DataSink for Splitter<'a, T> {
     }
 
     fn finish(&mut self) -> Result<(), String> {
-        eprintln!("Splitter: finish");
+        //eprintln!("Splitter: finish");
         if self.next_chunk_no > 0 {
             self.files_target.close_current_file()?;
         }

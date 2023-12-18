@@ -42,7 +42,7 @@ impl<'a, T: DataSink> Compressor2<'a, T> {
 
 impl<'a, T: DataSink> DataSink for Compressor2<'a, T> {
     fn add(&mut self, data: &[u8]) -> Result<(), String> {
-        eprintln!("Compressor: writing {} bytes", data.len());
+        //eprintln!("Compressor: writing {} bytes", data.len());
         self.enc.write_all(data).map_err(|e| format!("write all error: {}", e))
     }
     fn finish(&mut self) -> Result<(), String> {

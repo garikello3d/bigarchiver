@@ -43,7 +43,7 @@ impl<T: DataSink> DataSink for FixedSizeWriter<T> {
     }
 
     fn finish(&mut self) -> Result<(), String> {
-        eprintln!("FixedSizeWriter: finish");
+        //eprintln!("FixedSizeWriter: finish");
         if !self.buf.is_empty() {
             self.out.add(self.buf.as_slice())?;
             self.buf.clear();

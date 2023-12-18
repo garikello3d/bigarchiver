@@ -29,7 +29,7 @@ impl<'a, T: DataSink> DataHasher<'a, T> {
 
 impl<'a, T: DataSink> DataSink for DataHasher<'a, T> {
     fn add(&mut self, data: &[u8]) -> Result<(), String> {
-        eprintln!("DataHasher: writing {} bytes", data.len());
+        //eprintln!("DataHasher: writing {} bytes", data.len());
         self.hasher.write(data);
         self.counter += data.len();
         if let Some(write_to) = &mut self.write_to {
