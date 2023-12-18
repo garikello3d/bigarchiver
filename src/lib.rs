@@ -1,7 +1,7 @@
 mod hasher;
 use hasher::DataHasher;
 
-mod finalizable;
+pub mod finalizable;
 use finalizable::DataSink;
 
 mod enc_dec;
@@ -36,9 +36,10 @@ pub mod patterns;
 
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::{stdin, stdout};
-use std::io::Write;
+use std::io::{Write, Read};
 
-pub fn backup(
+pub fn backup<R: Read>(
+    mut read_from: R,
     auth: &str, auth_every_bytes: usize, split_size_bytes: usize, out_template: &str, 
     pass: &str, compress_level: u8, buf_size_bytes: usize) -> Result<(), String>
 {
@@ -60,11 +61,10 @@ pub fn backup(
         let mut fbuf = FixedSizeWriter::new(enc, auth_every_bytes);
         let mut comp = Compressor2::new(&mut fbuf, compress_level as u32);
         {
-            let mut hash_copier = DataHasher::with_writer(&mut comp, hash_seed);
+            let mut hash_copier = DataHasher::with_writer(Some(&mut comp), hash_seed);
 
-            let sin = &mut stdin();
             let mut stdinbuf = BufferedReader::new(
-                sin, &mut hash_copier, buf_size_bytes / 8, buf_size_bytes);
+                &mut read_from, &mut hash_copier, buf_size_bytes / 8, buf_size_bytes);
 
             stdinbuf.read_and_write_all()?;
 
@@ -78,28 +78,11 @@ pub fn backup(
 }
 
     
-pub fn check(restore: bool, cfg_path: &str, pass: &str, buf_size_bytes: usize, _check_free_space: bool) -> Result<(), String> {
-    struct StdoutWriter;
-
-    impl DataSink for StdoutWriter {
-        fn add(&mut self, data: &[u8]) -> Result<(), String> {
-            //eprintln!("writing {} bytes to stdout", data.len());
-            stdout().write_all(data).map_err(|e| format!("could not write {} bytes to stdout: {}", data.len(), e))
-        }
-
-        fn finish(&mut self) -> Result<(), String> {
-            stdout().flush().map_err(|e| format!("could not flush to stdout: {}", e))
-        }
-    }
-
+pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &str, buf_size_bytes: usize, _check_free_space: bool) -> Result<(), String> {
     let stats = read_metadata::<MultiFilesReader>(cfg_path)?;
+    let ref_write_to = write_to.as_mut();
 
-    let mut out = StdoutWriter{};
-
-    let mut hash_copier = 
-        if restore { DataHasher::with_writer(&mut out, stats.hash_seed.unwrap() ) } 
-        else { DataHasher::with_null(stats.hash_seed.unwrap()) }; // SAFE: read_metadata checked that all is set
-    
+    let mut hash_copier = DataHasher::with_writer(ref_write_to, stats.hash_seed.unwrap());
     {
         let mut decomp = Decompressor2::new(&mut hash_copier);
         let dec = Decryptor::new(&mut decomp, pass, &stats.auth_string);

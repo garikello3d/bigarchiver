@@ -10,12 +10,8 @@ pub struct DataHasher<'a, T: DataSink> {
 
 // transparently copies data to `Writer`, calculaing hash in the mean time
 impl<'a, T: DataSink> DataHasher<'a, T> {
-    pub fn with_writer(to: &'a mut T, seed: u64) -> DataHasher<'a, T> {
-        DataHasher { write_to: Some(to), hasher: Xxh3Hash128::with_seed(seed), counter: 0 }
-    }
-
-    pub fn with_null(seed: u64) -> DataHasher<'a, T> {
-        DataHasher { write_to: None, hasher: Xxh3Hash128::with_seed(seed), counter: 0 }
+    pub fn with_writer(to: Option<&'a mut T>, seed: u64) -> DataHasher<'a, T> {
+        DataHasher { write_to: to, hasher: Xxh3Hash128::with_seed(seed), counter: 0 }
     }
 
     pub fn result(&self) -> u64 {
@@ -32,7 +28,7 @@ impl<'a, T: DataSink> DataSink for DataHasher<'a, T> {
         //eprintln!("DataHasher: writing {} bytes", data.len());
         self.hasher.write(data);
         self.counter += data.len();
-        if let Some(write_to) = &mut self.write_to {
+        if let Some(write_to) = self.write_to.as_mut() {
             write_to.add(data)
         } else {
             Ok(())
