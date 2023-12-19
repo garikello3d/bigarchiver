@@ -8,3 +8,6 @@ liblzma = { version = "0.2.1", features = ["parallel", "static"] }
 rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"] }
 ring = "0.17.7"
 twox-hash = "1.6.3"
+
+[dev-dependencies]
+test-case = "*"
