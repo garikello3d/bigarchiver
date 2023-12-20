@@ -32,7 +32,7 @@ mod splitter;
 use splitter::Splitter;
 
 pub mod arg_opts;
-pub mod patterns;
+pub mod file_set;
 
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::{stdin, stdout};
@@ -55,7 +55,7 @@ pub fn backup<R: Read>(
     stats.hash_seed = Some(hash_seed);
 
     let mut fmgr = MultiFilesWriter::new();
-    let mut spl: Splitter<'_, MultiFilesWriter> = Splitter::new(&mut fmgr, split_size_bytes, out_template)?;
+    let mut spl: Splitter<'_, MultiFilesWriter> = Splitter::from_pattern(&mut fmgr, split_size_bytes, out_template)?;
     {
         let enc = Encryptor::new(&mut spl, pass, auth);
         let mut fbuf = FixedSizeWriter::new(enc, auth_every_bytes);

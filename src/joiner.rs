@@ -1,6 +1,6 @@
-use crate::patterns::{gen_chunk_path, analyze_pattern, pattern_from_cfg};
 use crate::finalizable::DataSink;
 use crate::stats::Stats;
+use crate::file_set::FileSet;
 
 pub trait MultiFilesReaderSource {
     fn open_next_file(&mut self, full_path: &str) -> Result<bool, String>;
@@ -12,38 +12,19 @@ pub trait MultiFilesReaderSource {
 pub struct Joiner<'a, T: DataSink, R: MultiFilesReaderSource> {
     from: R,
     to: &'a mut T,
-    file_patt: String,
+    file_set: FileSet,
     max_read_buf_size: usize,
-    next_chunk_no: usize,
-    patt_offset: usize,
-    patt_length: usize
+    next_chunk_no: usize
 }
 
 impl <'a, T: DataSink, R: MultiFilesReaderSource> Joiner<'a, T, R> {
-    pub fn from_pattern(read_from: R, write_to: &'a mut T, pattern: &'a str, max_read_buf_size: usize) -> Result<Self, String> {
-        let (offset, length) = analyze_pattern(pattern)?;
-        Ok(Self { 
-            from: read_from, 
-            to: write_to,
-            file_patt: pattern.to_owned(),
-            max_read_buf_size,
-            next_chunk_no: 0, 
-            patt_offset: offset, 
-            patt_length: length
-        })
-    }
-
     pub fn from_metadata(read_from: R, write_to: &'a mut T, metadata_path: &'a str, max_read_buf_size: usize) -> Result<Self, String> {
-        let pattern = pattern_from_cfg(metadata_path)?;
-        let (offset, length) = analyze_pattern(&pattern)?;
         Ok(Self { 
             from: read_from, 
             to: write_to,
-            file_patt: pattern,
+            file_set: FileSet::from_cfg_path(metadata_path)?,
             max_read_buf_size,
-            next_chunk_no: 0, 
-            patt_offset: offset, 
-            patt_length: length
+            next_chunk_no: 0
         })
     }
 
@@ -56,15 +37,14 @@ impl <'a, T: DataSink, R: MultiFilesReaderSource> Joiner<'a, T, R> {
                 self.from.close_current_file()?;
             }
 
-            let opened_or_not_found = self.from.open_next_file(
-                gen_chunk_path(
-                    &self.file_patt, self.next_chunk_no, self.patt_offset, self.patt_length)?
-                    .as_str()
-                ).map_err(|e| format!("could not read chunk #{} for pattern {}: {}", self.next_chunk_no, self.file_patt, e))?;
+            let path_to_open = self.file_set.gen_file_path(self.next_chunk_no);
+            let path_to_open = path_to_open.as_str();
+            let opened_or_not_found = self.from.open_next_file(path_to_open)
+                .map_err(|e| format!("could not read {} as chunk #{}: {}", path_to_open, self.next_chunk_no, e))?;
 
             if !opened_or_not_found {
                 if self.next_chunk_no == 0 { // first chunk must exist - otherwise it's a fatal error
-                    return Err(format!("could find first chunk for pattern {}", self.file_patt));
+                    return Err(format!("could find {} as first chunk", path_to_open));
                 } else { // further chunk not found -> treat it as end of everything
                     break;
                 }
@@ -261,7 +241,7 @@ mod tests {
         { // error opening
             let src = TestReaderSource{ data: BTreeMap::new(), failed_files: HashSet::from(["failed_file".to_owned()]) };
             let mut dst = TestReaderTarget::new();
-            let mut j = Joiner::from_pattern(src, &mut dst, "file%%%", 3).unwrap();
+            let mut j = Joiner::from_metadata(src, &mut dst, "file000.cfg", 3).unwrap();
             let r = j.read_and_write_all();
             assert!(r.is_err());
             assert!(dst.data.is_empty());
@@ -269,7 +249,7 @@ mod tests {
         { // not found
             let src = TestReaderSource{ data: BTreeMap::new(), failed_files: HashSet::new() };
             let mut dst = TestReaderTarget::new();
-            let mut j = Joiner::from_pattern(src, &mut dst, "file%%%", 3).unwrap();
+            let mut j = Joiner::from_metadata(src, &mut dst, "file000.cfg", 3).unwrap();
             let r = j.read_and_write_all();
             assert!(r.is_err());
             assert!(dst.data.is_empty());
@@ -283,7 +263,7 @@ mod tests {
             ("f01".to_owned(), (vec![3], None)),
             ]), failed_files: HashSet::new() };
         let mut dst = TestReaderTarget::new();
-        let mut j = Joiner::from_pattern(src, &mut dst, "f%%", 3).unwrap();
+        let mut j = Joiner::from_metadata(src, &mut dst, "f00.cfg", 3).unwrap();
         j.read_and_write_all().unwrap();
         assert_eq!(dst.data, vec![1,2,3]);
     }
@@ -295,7 +275,7 @@ mod tests {
             ("f01".to_owned(), (vec![6,7,8,9], None)),
             ]), failed_files: HashSet::new() };
         let mut dst = TestReaderTarget::new();
-        let mut j = Joiner::from_pattern(src, &mut dst, "f%%", 3).unwrap();
+        let mut j = Joiner::from_metadata(src, &mut dst, "f00.cfg", 3).unwrap();
         j.read_and_write_all().unwrap();
         assert_eq!(dst.data, vec![1,2,3,4,5,6,7,8,9]);
     }
@@ -307,7 +287,7 @@ mod tests {
             ("f01".to_owned(), (vec![3], None)),
             ]), failed_files: HashSet::from(["f02".to_owned()]) };
         let mut dst = TestReaderTarget::new();
-        let mut j = Joiner::from_pattern(src, &mut dst, "f%%", 3).unwrap();
+        let mut j = Joiner::from_metadata(src, &mut dst, "f00.cfg", 3).unwrap();
         j.read_and_write_all().unwrap_err();
     }
 
@@ -340,7 +320,8 @@ mod tests {
         assert_eq!(src_stream, chunks_concated);
 
         let mut target = TestReaderTarget::new();
-        let mut j = Joiner::from_pattern(src, &mut target, "f%%%%%%%%%", max_read).unwrap();
+        let mut j = Joiner::from_metadata(
+            src, &mut target, "f000000000.cfg", max_read).unwrap();
         j.read_and_write_all().unwrap();
         assert_eq!(target.data, src_stream);
     }

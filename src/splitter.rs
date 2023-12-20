@@ -1,4 +1,4 @@
-use crate::patterns::{analyze_pattern, gen_chunk_path, gen_cfg_path};
+use crate::file_set::FileSet;
 use crate::finalizable::DataSink;
 use crate::stats::Stats;
 
@@ -12,30 +12,25 @@ pub trait MultiFilesWriterTarget {
 pub struct Splitter<'a, T> {
     files_target: &'a mut T,
     chunk_sz: usize,
-    file_patt: &'a str,
+    file_set: FileSet,
     left_for_chunk: usize,
-    next_chunk_no: usize,
-    patt_offset: usize,
-    patt_length: usize,
+    next_chunk_no: usize
 }
 
 impl<'a, T: MultiFilesWriterTarget> Splitter<'a, T> {
-    pub fn new(tgt: &'a mut T, chunk_size: usize, pattern: &'a str) -> Result<Splitter<'a, T>, String> {
-        let (offset, length) = analyze_pattern(pattern)?;
+    pub fn from_pattern(tgt: &'a mut T, chunk_size: usize, pattern: &'a str) -> Result<Splitter<'a, T>, String> {
         Ok(Self { 
             files_target: tgt, 
             chunk_sz: chunk_size, 
-            file_patt: pattern, 
+            file_set: FileSet::from_pattern(pattern)?,
             left_for_chunk: chunk_size, 
-            next_chunk_no: 0,
-            patt_offset: offset,
-            patt_length: length
+            next_chunk_no: 0
         })
     }
 
     pub fn write_metadata(self, stats: &Stats) -> Result<(), String> {
         self.files_target.write_single_file(
-            gen_cfg_path(self.file_patt, self.patt_offset, self.patt_length)?.as_str(),
+            self.file_set.cfg_path().as_str(),
             format!("\
                 in_len={}\n\
                 in_hash={:016x}\n\
@@ -68,8 +63,7 @@ impl<'a, T: MultiFilesWriterTarget> DataSink for Splitter<'a, T> {
                     self.files_target.close_current_file()?;
                 }
                 self.files_target
-                    .open_next_file(gen_chunk_path(self.file_patt, self.next_chunk_no, self.patt_offset, self.patt_length)?
-                    .as_str())?;
+                    .open_next_file(self.file_set.gen_file_path(self.next_chunk_no).as_str())?;
                 self.next_chunk_no += 1;
                 self.left_for_chunk = self.chunk_sz;
             }
@@ -143,7 +137,7 @@ mod tests {
 
      fn assert_split(chunk_size: usize, data1: Vec<u8>, data2: Vec<u8>, expected: Vec<(&str, Vec<u8>)>) {
         let mut files = FilesEmulator{ files: Vec::new() };
-        let mut spl = Splitter::<FilesEmulator>::new(&mut files, chunk_size, "out%%%.ext").unwrap();
+        let mut spl = Splitter::<FilesEmulator>::from_pattern(&mut files, chunk_size, "out%%%.ext").unwrap();
         spl.add(data1.as_slice()).unwrap();
         spl.add(data2.as_slice()).unwrap();
         spl.finish().unwrap();

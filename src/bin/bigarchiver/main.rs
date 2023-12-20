@@ -1,6 +1,6 @@
 use bigarchiver::arg_opts::{ArgOpts, ArgModeSpecificOpts};
 use bigarchiver::{backup, check};
-use bigarchiver::patterns::cfg_from_pattern;
+use bigarchiver::file_set::cfg_from_pattern;
 use bigarchiver::finalizable::DataSink;
 use std::io::{stdout, Write};
 
@@ -28,7 +28,7 @@ fn process_args(args: &ArgOpts) -> Result<(), String> {
                 *split_size, &out_template, 
                 &args.pass, *compress_level, args.buf_size)?;
             if !no_check {
-                let cfg_path = cfg_from_pattern(&out_template)?;
+                let cfg_path = cfg_from_pattern(&out_template);
                 eprintln!("verifying...");
                 check(None::<StdoutWriter>, &cfg_path, &args.pass, args.buf_size, false)
             } else {
