@@ -34,6 +34,9 @@ use splitter::Splitter;
 pub mod arg_opts;
 pub mod file_set;
 
+mod free_space;
+use free_space::get_free_space;
+
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::{stdin, stdout};
 use std::io::{Write, Read};
@@ -78,8 +81,16 @@ pub fn backup<R: Read>(
 }
 
     
-pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &str, buf_size_bytes: usize, _check_free_space: bool) -> Result<(), String> {
+pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &str, buf_size_bytes: usize, check_free_space: &Option<&str>) -> Result<(), String> {
     let stats = read_metadata::<MultiFilesReader>(cfg_path)?;
+
+    if let Some(mount_point) = check_free_space {
+        let all_data = stats.in_data_len.unwrap(); // SAFE because if was checked in read_metadata()
+        if get_free_space(mount_point)? < all_data {
+            return Err(format!("filesystem of '{}' won't fit {} of data to restore", mount_point, all_data));
+        }
+    }
+
     let ref_write_to = write_to.as_mut();
 
     let mut hash_copier = DataHasher::with_writer(ref_write_to, stats.hash_seed.unwrap());

@@ -12,7 +12,7 @@ pub enum ArgModeSpecificOpts {
     },
     Restore {
         config_path: String,
-        no_check_free_space: bool,
+        check_free_space: Option<String>,
         no_check: bool,
     },
     Check {
@@ -63,7 +63,7 @@ impl ArgOpts {
                 ("split-size",          true,   vec![Mode::Backup],                             Kind::Valued),
                 ("compress-level",      true,   vec![Mode::Backup],                             Kind::Valued),
 
-                ("no-check-free-space", false,  vec![Mode::Restore],                            Kind::Single),
+                ("check-free-space",    false,  vec![Mode::Restore],                            Kind::Valued),
                 ("config",              true,   vec![Mode::Restore, Mode::Check],               Kind::Valued),
             ].into_iter().map(|(c, must, m, k)|(c, OptProp{ 
                 must, modes: HashSet::from_iter(m.into_iter()), kind: k, val: None }
@@ -157,7 +157,7 @@ impl ArgOpts {
                 Mode::Restore => ArgModeSpecificOpts::Restore {
                     config_path: cfg.get("config").unwrap().val.clone().unwrap(),
                     no_check: cfg.get("no-check").unwrap().val.is_some(),
-                    no_check_free_space: cfg.get("no-check-free-space").unwrap().val.is_some()
+                    check_free_space: cfg.get("check-free-space").unwrap().val.clone()
                 },
                 Mode::Check => ArgModeSpecificOpts::Check {
                     config_path: cfg.get("config").unwrap().val.clone().unwrap(),
@@ -241,7 +241,7 @@ mod tests {
     fn restore_opts() {
         assert_eq!(
             ArgOpts::from_os_args(&to_os(&vec![
-                "--restore", "--config", "configval", "--pass", "passval", "--buf-size", "10", "--no-check-free-space"
+                "--restore", "--config", "configval", "--pass", "passval", "--buf-size", "10", "--check-free-space", "/mount"
                 ])).unwrap(),
             ArgOpts{
                     pass: "passval".to_owned(),
@@ -249,7 +249,7 @@ mod tests {
                     mode_specific_opts: ArgModeSpecificOpts::Restore {
                         config_path: "configval".to_owned(),
                         no_check: false,
-                        no_check_free_space: true
+                        check_free_space: Some("/mount".to_owned())
                     }
             });
         assert_eq!(
@@ -262,7 +262,7 @@ mod tests {
                     mode_specific_opts: ArgModeSpecificOpts::Restore {
                         config_path: "configval".to_owned(),
                         no_check: true,
-                        no_check_free_space: false
+                        check_free_space: None
                     }
             });
     }

@@ -7,7 +7,9 @@ mod common;
 
 use rand::RngCore;
 use test_case::test_matrix;
+use std::io::Write;
 use std::sync::atomic::AtomicI32;
+use std::fs::File;
 
 static CNT: AtomicI32 = AtomicI32::new(0);
 
@@ -62,6 +64,23 @@ fn backup_restore_all_ok(input_size: usize, auth_size: usize, split_size: usize,
         Some(src_unpacked),
         &out_cfg,
         "secret",
-        buf_size, false).unwrap();
+        buf_size, &None::<&str>).unwrap();
 
+}
+
+#[test]
+fn restore_no_free_space() {
+    let cfg_path = "/tmp/no_free_space0.cfg";
+    let cfg_contents = format!("\
+        in_len={}\n\
+        in_hash=abcde\n\
+        hash_seed=edcba\n\
+        xz_len=54321\n\
+        nr_chunks=1\n\
+        chunk_len=2\n\
+        auth=Author Name\n\
+        auth_len=3", usize::MAX);
+    File::create(cfg_path).unwrap().write_all(cfg_contents.as_bytes()).unwrap();
+    let err = check(Some(SinkToVector{ incoming: Vec::new(), etalon: b"" }), cfg_path, "", 100, &Some("/tmp")).unwrap_err();
+    println!("err = {}", err);
 }

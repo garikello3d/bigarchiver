@@ -4,6 +4,7 @@ version = "0.1.0"
 edition = "2021"
 
 [dependencies]
+libc = "0.2.151"
 liblzma = { version = "0.2.1", features = ["parallel", "static"] }
 rand = { version = "0.8.5", default-features = false, features = ["std", "std_rng"] }
 ring = "0.17.7"

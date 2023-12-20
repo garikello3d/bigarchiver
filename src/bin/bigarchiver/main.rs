@@ -30,25 +30,27 @@ fn process_args(args: &ArgOpts) -> Result<(), String> {
             if !no_check {
                 let cfg_path = cfg_from_pattern(&out_template);
                 eprintln!("verifying...");
-                check(None::<StdoutWriter>, &cfg_path, &args.pass, args.buf_size, false)
+                check(None::<StdoutWriter>, &cfg_path, &args.pass, args.buf_size, &None::<&str>)
             } else {
                 Ok(())
             }
         },
-        ArgModeSpecificOpts::Restore { config_path, no_check, no_check_free_space } => {
+        ArgModeSpecificOpts::Restore { config_path, no_check, check_free_space } => {
             if !no_check {
                 eprintln!("verifying before restore...");
-                check(None::<StdoutWriter>, &config_path, &args.pass, args.buf_size, false)
+                check(None::<StdoutWriter>, &config_path, &args.pass, args.buf_size, &None)
                     .map_err(|e| format!("will not restore data, integrity check error: {}", e))?;
             }
             eprintln!("restoring...");
-            check(Some(StdoutWriter{}), &config_path, &args.pass, args.buf_size, !no_check_free_space)
-                .map_err(|e| format!("error restoring data: {}", e))
+            let may_be_check = check_free_space.as_ref().map(|s| s.as_str());
+            check(Some(StdoutWriter{}), &config_path, &args.pass, 
+                args.buf_size, &may_be_check)
+                    .map_err(|e| format!("error restoring data: {}", e))
         },
         ArgModeSpecificOpts::Check { config_path } => {
             eprintln!("verifying...");
             check(None::<StdoutWriter>, &config_path, &args.pass, 
-                args.buf_size, false)
+                args.buf_size, &None)
         }
     }
 }
