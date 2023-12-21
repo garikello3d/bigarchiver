@@ -8,15 +8,15 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 
 ## Usage samples
 
-### Example to backup data coming from stdin into files
+#### Example to backup data coming from stdin into files
 
 `tar cf - /my/disk | ./bigarchiver --backup --buf-size 256 --auth "My Full Name" --auth-every 32 --pass mysecret --compress-level 6 --split-size 1024 --out-template /path/to/files%%%%%%`
 
-### Example to restore data from files to stdout:
+#### Example to restore data from files to stdout:
 
 `./bigarchiver --restore --check-free-space /my ] --buf-size 256 --pass mysecret --config /path/to/files000000.cfg | tar xf - /my/disk`
 
-### Example to verify the backup files without actual restore:
+#### Example to verify the backup files without actual restore:
 
 `./bigarchiver --check --buf-size 256 --pass mysecret --config /path/to/files000000.cfg`
 
@@ -29,9 +29,35 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 | `--pass <password>` | password for encryption or decryption<br/>**WARNING:** it's impossible to restore the archive if password is lost! |
 | `--auth <auth_string>` | any arbitrary public authentication string that will be embedded into to archive; can be someone's name or passport ID, or company name; it's not kept in secret, but an attacker won't be able to impersonate this string |
 | `--auth-every <size_MB>` | how frequent to insert the authentication string; any reasonble value around dozens of megabytes is ok |
-| `--compress-level <level>` | set XZ compression preset, valid values are from 0 to 6 (see _Compression preset_ section below for details) |
+| `--compress-level <level>` | set XZ compression preset, valid values are from 0 to 6 (see _Memory usage_ section below for details); value of 6 will fit most of times |
 | `--split-size <size_MB>` | output chunk size to split to |
 | `--out-template <template>` | full path how to name output files; any sequence of '%' characters will accept sequence number; if no '%' sequence is found, or it appears more than once, the error will be returned |
 | `--config <config>` | full path to config file left from a previous successful backup operation |
 | `--check-free-space <path>` | check free space available on the indicated filesystem before restore |
 | `--no-check` | for backup mode, don't do integrity check _after_ backup creation; for restore mode, don't do integrity check _before_ restoring |
+
+## Memory usage
+
+The tool allows control of how much memory will be used. On the one hand, the more memory it uses, the faster will be the operation. On the other hand, using too much memory will put other processes' memory pages into swap that may not be desired. So in the absense of one-size-fits-all approach, the option `--buf-size` should be used. The overall memory consumption can be _roughly_ estimated as follows:
+
+`MEM_USAGE_APPX = BUF_SIZE + XZ_CONSUMPTION`
+
+where _XZ_CONSUMPTION_ is additional memory intensively swallowed by XZ compressor/decompressor module, which, in turn, can be estimated like this:
+
+| XZ level | Compressor consumption, MB | Decompressor consumption, MB |
+|---|---|---|
+| 0 | 5 | 1 |
+| 1 | 10 | 2 |
+| 2 | 20 | 3 |
+| 3 | 30 | 5 |
+| 4 | 50 | 5 |
+| 5 | 100 | 10 |
+| 6 | 100 | 10 |
+| 7 | 190 | 20 |
+| 8 | 370 | 30 |
+| 9 | 680 | 65 |
+
+## Q & A
+
+Q: why is this tool needed if one can use something like `tar | xz | openssl | split`?
+A: those kind of "shell" approach would require an immense number of accomanying helper code, mainly to verify the correctness of the written result
