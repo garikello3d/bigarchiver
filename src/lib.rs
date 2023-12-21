@@ -83,6 +83,7 @@ pub fn backup<R: Read>(
     
 pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &str, buf_size_bytes: usize, check_free_space: &Option<&str>) -> Result<(), String> {
     let stats = read_metadata::<MultiFilesReader>(cfg_path)?;
+    eprintln!("authentication string: {}", stats.auth_string);
 
     if let Some(mount_point) = check_free_space {
         let all_data = stats.in_data_len.unwrap(); // SAFE because if was checked in read_metadata()
