@@ -44,7 +44,7 @@ The tool allows control of how much memory will be used. On the one hand, the mo
 
 where _XZ_CONSUMPTION_ is additional memory intensively swallowed by XZ compressor/decompressor module, which, in turn, can be estimated like this:
 
-| XZ level | Compressor consumption, MB | Decompressor consumption, MB |
+| XZ level | Compressor,  MB | Decompressor, MB |
 |---|---|---|
 | 0 | 5 | 1 |
 | 1 | 10 | 2 |
@@ -60,4 +60,6 @@ where _XZ_CONSUMPTION_ is additional memory intensively swallowed by XZ compress
 ## Q & A
 
 Q: why is this tool needed if one can use something like `tar | xz | openssl | split`?
+
 A: those kind of "shell" approach would require an immense number of accomanying helper code, mainly to verify the correctness of the written result
+
