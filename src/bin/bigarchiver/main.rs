@@ -58,16 +58,8 @@ fn process_args(args: &ArgOpts) -> Result<(), String> {
 fn main() {
     let args = {
         let args = ArgOpts::from_os_args(&std::env::args_os().skip(1).collect());
-        if let Err(e) = &args {
-            eprintln!("
-error parsing command line: {}\n\n\
-example to pack from stdout:\n
-tar cf - /my/files | bigarchiver --backup --out-template /path/to/dir/file%%%%xxx --pass Secret --buf-size 256 --auth AuthData --auth-every 32 --split-size 10 --compress-level 6 [--no-check]\n
-example to unpack into stdout:\n
-./bigarchiver --restore --config /path/to/dir/file%%%%xxx.cfg --pass Secret --buf-size 256 [--no-check] [--no-check-free-space] | tar xf -\n
-example to check existing backup without restoring:\n
-./bigarchiver --check --config /path/to/dir/file%%%%xxx.cfg --pass Secret --buf-size 256
-" ,e);
+        if let Err((err_msg, usage)) = &args {
+            eprintln!("{}\n\n{}", err_msg, usage);
             std::process::exit(1);
         };
         args.unwrap()
