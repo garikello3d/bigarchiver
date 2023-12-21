@@ -29,7 +29,7 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 | `--pass <password>` | password for encryption or decryption<br/>**WARNING:** it's impossible to restore the archive if password is lost! |
 | `--auth <auth_string>` | any arbitrary public authentication string that will be embedded into to archive; can be someone's name or passport ID, or company name; it's not kept in secret, but an attacker won't be able to impersonate this string |
 | `--auth-every <size_MB>` | how frequent to insert the authentication string; any reasonble value around dozens of megabytes is ok |
-| `--compress-level <level>` | set XZ compression preset, valid values are from 0 to 6 (see _Memory usage_ section below for details); value of 6 will fit most of times |
+| `--compress-level <level>` | set XZ compression preset, valid values are from 0 to 9 (see _Memory usage_ section below for details); value of 6 will fit most of times |
 | `--split-size <size_MB>` | output chunk size to split to |
 | `--out-template <template>` | full path how to name output files; any sequence of '%' characters will accept sequence number; if no '%' sequence is found, or it appears more than once, the error will be returned |
 | `--config <config>` | full path to config file left from a previous successful backup operation |
@@ -61,5 +61,9 @@ where _XZ_CONSUMPTION_ is additional memory intensively swallowed by XZ compress
 
 Q: why is this tool needed if one can use something like `tar | xz | openssl | split`?
 
-A: those kind of "shell" approach would require an immense number of accomanying helper code, mainly to verify the correctness of the written result
+A: those kind of "shell" approach would require an immense number of accomanying helper code, mainly to verify the correctness of the written result. Not to mention the portability problems of different shells in different systems.
+
+Q: which compression level should I use?
+
+A: it depends how much memory and CPU one can devote to backup process. Setting too low levels makes sence when input data is of high randomness (e.g. it already consists of some archive files, so trying to compress it will drain CPU power for nothing), or a machine has very little memory available. Setting too high levels is only useful when the output size is critical and the destination storage is expensive. All in all, for majority of cases levels of 4-6 is the best approach.
 
