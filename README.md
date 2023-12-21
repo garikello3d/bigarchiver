@@ -34,7 +34,7 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 <tbody>
 
 <tr>
-<td>--backup, --restore, --check</td><td>select mode of operation (only one at a time)</td>
+<td>--backup, --restore, <em>--check</em></td><td>select mode of <b>operation</b> (<i>only</i> one at a time)</td>
 </tr>
 
 </tbody>
