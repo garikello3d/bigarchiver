@@ -22,16 +22,16 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 
 # Command line option reference
 
-| Option | Meaning |
+| Option &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; | Meaning |
 |---|---|
 | `--backup, --restore, --check` | select mode of operation (only one at a time) |
 | `--buf-size <size_MB>` | buffer size to use when reading or writing (see _Memory usage_ section below for details) |
-| `--pass <password>` | password for encryption or decryption<br/>*WARNING*it's impossible to restore the archive if password is lost! |
+| `--pass <password>` | password for encryption or decryption<br/>**WARNING:** it's impossible to restore the archive if password is lost! |
 | `--auth <auth_string>` | any arbitrary public authentication string that will be embedded into to archive; can be someone's name or passport ID, or company name; it's not kept in secret, but an attacker won't be able to impersonate this string |
 | `--auth-every <size_MB>` | how frequent to insert the authentication string; any reasonble value around dozens of megabytes is ok |
 | `--compress-level <level>` | set XZ compression preset, valid values are from 0 to 6 (see _Compression preset_ section below for details |
 | `--split-size <size_MB>` | output chunk size to split to |
-| `--out-template <template>` | full path how to name output files; any sequence of '%' characters will accept sequence number; if no '%' sequence is found, or it appears more than one, the error will be returned |
+| `--out-template <template>` | full path how to name output files; any sequence of '%' characters will accept sequence number; if no '%' sequence is found, or it appears more than ones, the error will be returned |
 
 
 
