@@ -22,7 +22,7 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 
 # Command line option reference
 
-| Option &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; &nbsp; | Meaning |
+| Option | Meaning |
 |---|---|
 | `--backup, --restore, --check` | select mode of operation (only one at a time) |
 | `--buf-size <size_MB>` | buffer size to use when reading or writing (see _Memory usage_ section below for details) |
@@ -36,14 +36,14 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 <table>
     <thead>
         <tr>
-            <th width="500px"> API</th>
-            <th width="500px">CLI</th>
+            <th width="30%">API</th>
+            <th width="70%">CLI</th>
         </tr>
     </thead>
 <tbody>
-    <tr width="600px">
-        <td>sdfsdf</td>
-        <td>sdfsdfsd</td>
+    <tr>
+        <td>sdfsdsssssssf</td>
+        <td>sdfsdfssssssssd</td>
     </tr>
     </tbody>
 </table>
