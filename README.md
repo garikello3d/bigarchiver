@@ -6,21 +6,21 @@ The tool compresses the input data stream with XZ algorithm and encrypts using [
 
 Finally, additional assurance is maintaned since the integrity of resulting files is verified right after each backup, so one can be sure that when the backups as needed, they are readable and contain the exact source data.
 
-# Usage samples
+## Usage samples
 
-## Example to backup data coming from stdin into files
+### Example to backup data coming from stdin into files
 
 `tar cf - /my/disk | ./bigarchiver --backup --buf-size 256 --auth "My Full Name" --auth-every 32 --pass mysecret --compress-level 6 --split-size 1024 --out-template /path/to/files%%%%%%`
 
-## Example to restore data from files to stdout:
+### Example to restore data from files to stdout:
 
 `./bigarchiver --restore --check-free-space /my ] --buf-size 256 --pass mysecret --config /path/to/files000000.cfg | tar xf - /my/disk`
 
-## Example to verify the backup files without actual restore:
+### Example to verify the backup files without actual restore:
 
 `./bigarchiver --check --buf-size 256 --pass mysecret --config /path/to/files000000.cfg`
 
-# Command line option reference
+## Command line option reference
 
 | Option                                                   | Meaning |
 |----------------------------------------------------------|---------|
