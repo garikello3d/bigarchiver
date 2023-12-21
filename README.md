@@ -35,7 +35,7 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 
 <table>
     <thead>
-        <tr>
+        <tr width="100%">
             <th width="300px">API</th>
             <th>CLI</th>
         </tr>
