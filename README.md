@@ -33,8 +33,19 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 | `--split-size <size_MB>` | output chunk size to split to |
 | `--out-template <template>` | full path how to name output files; any sequence of '%' characters will accept sequence number; if no '%' sequence is found, or it appears more than ones, the error will be returned |
 
-
-
-
+<table>
+    <thead>
+        <tr>
+            <th width="500px"> API</th>
+            <th width="500px">CLI</th>
+        </tr>
+    </thead>
+<tbody>
+    <tr width="600px">
+        <td>sdfsdf</td>
+        <td>sdfsdfsd</td>
+    </tr>
+    </tbody>
+</table>
 
 
