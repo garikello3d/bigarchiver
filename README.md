@@ -40,7 +40,7 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 </tbody>
 </table>
 
-| Option | Meaning |
+| Option&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;| Meaning |
 |---|---|
 | --buf-size <size_MB> | buffer size to use when reading or writing (see _Memory usage_ section below for details) |
 | `--pass <password>` | password for encryption or decryption<br/>**WARNING:** it's impossible to restore the archive if password is lost! |
