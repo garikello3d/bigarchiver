@@ -40,9 +40,9 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 </tbody>
 </table>
 
-| Option &#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2;&#xA0C2; | Meaning |
-|------------------------|---------|
-| --buf-size <size_MB> | buffer size to use when reading or writing (see _Memory usage_ section below for details) |
+| Option                     | Meaning |
+|----------------------------|---------|
+| `--buf-size <size_MB>` | buffer size to use when reading or writing (see _Memory usage_ section below for details) |
 | `--pass <password>` | password for encryption or decryption<br/>**WARNING:** it's impossible to restore the archive if password is lost! |
 | `--auth <auth_string>` | any arbitrary public authentication string that will be embedded into to archive; can be someone's name or passport ID, or company name; it's not kept in secret, but an attacker won't be able to impersonate this string |
 | `--auth-every <size_MB>` | how frequent to insert the authentication string; any reasonble value around dozens of megabytes is ok |
