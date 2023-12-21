@@ -36,8 +36,8 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 <table>
     <thead>
         <tr>
-            <th width="60%">API</th>
-            <th width="40%">CLI</th>
+            <th width="300px">API</th>
+            <th>CLI</th>
         </tr>
     </thead>
 <tbody>
