@@ -22,9 +22,25 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 
 # Command line option reference
 
-| Option | Meaning |
-|---|---|
-| `--backup, --restore, --check` | select mode of operation (only one at a time) |
+<table>
+<thead>
+
+<tr>
+<th width="300px">Option</th>
+<th width="1000px">Meaning</th>
+</tr>
+
+</thead>
+<tbody>
+
+<tr>
+<td>`--backup, --restore, --check`</td><td>select mode of operation (only one at a time)</td>
+</tr>
+
+</tbody>
+</table>
+
+
 | `--buf-size <size_MB>` | buffer size to use when reading or writing (see _Memory usage_ section below for details) |
 | `--pass <password>` | password for encryption or decryption<br/>**WARNING:** it's impossible to restore the archive if password is lost! |
 | `--auth <auth_string>` | any arbitrary public authentication string that will be embedded into to archive; can be someone's name or passport ID, or company name; it's not kept in secret, but an attacker won't be able to impersonate this string |
@@ -36,7 +52,7 @@ Finally, additional assurance is maintaned since the integrity of resulting file
 <table>
     <thead>
         <tr>
-            <th width="1000px">API</th>
+            <th width="300px">API</th>
             <th width="1000px">CLI</th>
         </tr>
     </thead>
