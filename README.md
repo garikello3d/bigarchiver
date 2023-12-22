@@ -2,7 +2,7 @@
 
 With this tool you can backup big volumes of data and split it into multiple fixed-size files. Why to split? Because a single huge monolithic file is extremely hard to manage, especially when using network-mounted filesystems (e.g. DavFS, SSHFS, NFS, etc). For most cloud providers, uploading, say, a 500G file is a challenge: it may reject it an with error, or the upload may be interrupted in the middle (with or without error), or any other things may happen depending on the phase of the moon. For example, Google Drive does not work well over DavFS with +2G files, and YandexDisk starts to misbehave around 1G.
 
-The tool compresses the input data stream with XZ algorithm and encrypts using [authenticated encryption](https://en.wikipedia.org/wiki/Authenticated_encryption) providing both confidentiality and integrity. The AES-128-GCM is currently used as it performs super fast on modern CPUs and also gives high resistence. It perfectly fits cloud infrastructures where security is a regulatory requirement. With this type of encryption scheme, any attacker's attempt to modify the encrypted data (without decrypting) will be detected.
+The tool compresses the input data stream with XZ algorithm and encrypts using [authenticated encryption](https://en.wikipedia.org/wiki/Authenticated_encryption) providing both confidentiality and integrity. The AES-128-GCM is currently used as it performs super fast on modern CPUs and also gives high resistance. It perfectly fits cloud infrastructures where security is a regulatory requirement. With this type of encryption scheme, any attacker's attempt to modify the encrypted data (without decrypting) will be detected.
 
 Finally, additional assurance is maintained since the integrity of resulting files is verified right after each backup, so one can be sure that when the backups as needed, they are readable and contain the exact source data.
 
@@ -14,7 +14,7 @@ Finally, additional assurance is maintained since the integrity of resulting fil
 
 #### Example to restore data from files to stdout:
 
-`./bigarchiver --restore --check-free-space /my ] --buf-size 256 --pass mysecret --config /path/to/files000000.cfg | tar xf - /my/disk`
+`./bigarchiver --restore --check-free-space /my --buf-size 256 --pass mysecret --config /path/to/files000000.cfg | tar xf - /my/disk`
 
 #### Example to verify the backup files without actual restore:
 
@@ -40,7 +40,7 @@ Finally, additional assurance is maintained since the integrity of resulting fil
 
 The tool allows control of how much memory will be used. On the one hand, the more memory it uses, the faster will be the operation. On the other hand, using too much memory will put other processes' memory pages into swap that may not be desired. So in the absence of one-size-fits-all approach, the option `--buf-size` should be used. The overall memory consumption can be _roughly_ estimated as follows:
 
-`MEM_USAGE_APPX = BUF_SIZE + XZ_CONSUMPTION`
+`MEM_USAGE_APPRX = BUF_SIZE + XZ_CONSUMPTION`
 
 where _XZ_CONSUMPTION_ is additional memory intensively swallowed by XZ compressor/decompressor module, which, in turn, can be estimated like this:
 
@@ -65,7 +65,7 @@ A: those kind of "shell" approach would require an significant amount of accompa
 
 Q: why the Authenticated encryption is used, and not just plain old AES (or any other proven symmetric encryption)?
 
-A: symmetric encryption provides only confidentiality assurance (meaning unauthorized persons cannot read the data), but it lacks authenticity (meaning no unauthorized modifications can go undetected, even if it's just a dumb corruption of data). This is where AEAD encryption comes into scene.
+A: basic symmetric encryption provides only confidentiality assurance (meaning unauthorized persons cannot read the data), but it lacks authenticity (meaning no unauthorized modifications can go undetected, even if it's just a dumb corruption of data). This is where AEAD encryption comes into scene.
 
 Q: is the encryption hardware accelerated?
 
@@ -82,3 +82,7 @@ A: the process stops with non-zero exit code leaving everything partially writte
 Q: how is the encryption key produced from the string password given?
 
 A: password-based key derivation function PBKDF2-HMAC-SHA256 is used with 100k iterations
+
+## Disclaimer
+
+Although the tool is abundant with tests and coded in Rust, it's written by a human and may contain errors. The author has not responsibility on lost data of any production servers in case something goes wrong.
