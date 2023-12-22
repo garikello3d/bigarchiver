@@ -96,7 +96,7 @@ impl ArgOpts {
         let mut usage = String::from("Usage:\n\n");
         for (title, mode, selector_option) in [
             ("1. to pack data coming from stdin into files", Mode::Backup, "backup"),
-            ("2. to unpack data from files to to stdout", Mode::Restore, "restore"),
+            ("2. to unpack data from files to stdout", Mode::Restore, "restore"),
             ("3. to verify the integrify of data from files", Mode::Check, "check")]
         {
             usage.push_str(title);
