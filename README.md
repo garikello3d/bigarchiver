@@ -83,6 +83,14 @@ Q: how is the encryption key produced from the string password given?
 
 A: password-based key derivation function PBKDF2-HMAC-SHA256 is used with 100k iterations
 
+## TODO/plans
+
+* select encryption algorithm and key size, or even turn off the encryption (for the sake of speed)
+* proper cleanup after interrupted/failed backup
+* record time spent and throughput (I normally know when I _start_ my backups, but when the process is actually finished is not always obvious)
+* add benchmark mode, so that one can select best compression and encryption settings on exact hardware
+* multi-threaded compression/decompression
+
 ## Disclaimer
 
-Although the tool is abundant with tests and coded in Rust, it's written by a human and may contain errors. The author has not responsibility on lost data of any production servers in case something goes wrong.
+Although the tool is abundant with tests and coded in Rust, it's written by a human and may contain errors. The author has no responsibility on lost data of any production servers in case something goes wrong
