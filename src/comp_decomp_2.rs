@@ -7,6 +7,7 @@ pub struct Conv<'a, T: DataSink> {
 }
 
 impl<'a, T: DataSink> Conv<'a, T> {
+    #[allow(dead_code)]
     pub fn get_sink(&'a self) -> &'a T {
         self.t
     }
@@ -31,10 +32,12 @@ impl<'a, T: DataSink> Compressor2<'a, T> {
         Compressor2 { enc: XzEncoder::new(Conv{ t: to }, level) }
     }
 
+    #[allow(dead_code)]
     pub fn uncompressed(&self) -> usize {
         self.enc.total_in() as usize
     }
 
+    #[allow(dead_code)]
     pub fn compressed(&self) -> usize {
         self.enc.total_out() as usize
     }
@@ -62,6 +65,7 @@ impl<'a, T: DataSink> Decompressor2<'a, T> {
         Decompressor2 { dec: XzDecoder::new(Conv{ t: to }) }
     }
 
+    #[allow(dead_code)]
     pub fn get_decoder(&'a self) -> &XzDecoder<Conv<'a, T>> {
         &self.dec
     }

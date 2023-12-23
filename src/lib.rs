@@ -38,8 +38,7 @@ mod free_space;
 use free_space::get_free_space;
 
 use std::time::{SystemTime, UNIX_EPOCH};
-use std::io::{stdin, stdout};
-use std::io::{Write, Read};
+use std::io::Read;
 
 pub fn backup<R: Read>(
     mut read_from: R,

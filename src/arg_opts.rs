@@ -1,4 +1,4 @@
-use std::{ffi::OsString, collections::{HashMap, HashSet}};
+use std::{ffi::OsString, collections::HashMap};
 
 #[derive(Debug, PartialEq, Eq)]
 pub enum ArgModeSpecificOpts {
@@ -85,7 +85,7 @@ impl ArgOpts {
 
                 ("config", true, vec![
                     (Mode::Restore, "full path to config file of the archive to restore"),
-                    (Mode::Check, "full path to config file of the archive to restore")
+                    (Mode::Check, "full path to config file of the archive to check")
                     ], Kind::Valued, Some("/path/to/files000000.cfg")),
 
             ].into_iter().map(|(c, must, m, k, sample)|(c, OptProp{ 
