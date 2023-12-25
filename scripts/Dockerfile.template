@@ -1,0 +1,13 @@
+ARG OS
+FROM $OS
+
+ARG PAC
+
+RUN rm /bin/sh && ln -s /bin/bash /bin/sh
+RUN $PAC update && $PAC install -y git gcc curl
+
+RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rustup && sh /tmp/rustup -y
+ADD scripts/build-internal.sh /
+RUN mkdir -p /dummy/src
+COPY Cargo.toml /dummy
+RUN source $HOME/.cargo/env && cd /dummy && echo "// dummy file" > src/lib.rs && cargo build --release
