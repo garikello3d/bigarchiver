@@ -15,7 +15,7 @@ impl<'a, T: DataSink> Conv<'a, T> {
 
 impl<'a, T: DataSink> Write for Conv<'a, T> {
     fn write(&mut self, data: &[u8]) -> std::io::Result<usize> {
-        self.t.add(data).map(|_|data.len()).map_err(|e| std::io::Error::other(e))
+        self.t.add(data).map(|_|data.len()).map_err(|e| std::io::Error::new(std::io::ErrorKind::Other, e))
     }
     fn flush(&mut self) -> std::io::Result<()> {
         Ok(())
