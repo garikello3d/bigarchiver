@@ -3,6 +3,7 @@ use bigarchiver::{backup, check};
 use bigarchiver::file_set::cfg_from_pattern;
 use bigarchiver::finalizable::DataSink;
 use std::io::{stdout, Write};
+use std::process::ExitCode;
 
 struct StdoutWriter;
 
@@ -55,21 +56,21 @@ fn process_args(args: &ArgOpts) -> Result<(), String> {
     }
 }
 
-fn main() {
+fn main() -> ExitCode {
     let args = {
         let args = ArgOpts::from_os_args(&std::env::args_os().skip(1).collect());
         if let Err((err_msg, usage)) = &args {
             eprintln!("{}\n\n{}", err_msg, usage);
-            std::process::exit(1);
+            return ExitCode::from(2);
         };
         args.unwrap()
     };
 
     if let Err(e) = process_args(&args) {
         eprintln!("\nerror: {}\n", e);
-        // TODO set proper exit code
+        return ExitCode::from(1);
     } else {
         eprintln!("\ndone\n");
     }
-    
+    ExitCode::SUCCESS
 }
