@@ -3,6 +3,11 @@ name = "bigarchiver"
 version = "0.1.0"
 edition = "2021"
 
+[profile.release]
+lto = true
+codegen-units = 1
+strip = true
+
 [dependencies]
 libc = "0.2.151"
 liblzma = { version = "0.2.1", features = ["parallel", "static"] }
