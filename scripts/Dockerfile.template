@@ -4,7 +4,7 @@ FROM $OS
 ARG PAC
 
 RUN rm /bin/sh && ln -s /bin/bash /bin/sh
-RUN $PAC update && $PAC install -y git gcc curl
+RUN $PAC -y update && $PAC install -y git gcc curl
 
 RUN curl --proto '=https' --tlsv1.2 -sSf https://sh.rustup.rs > /tmp/rustup && sh /tmp/rustup -y
 ADD scripts/build-internal.sh /
