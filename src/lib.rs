@@ -39,16 +39,29 @@ use free_space::get_free_space;
 
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::Read;
+use time::OffsetDateTime;
+
+fn timestamp() -> u64 {
+    SystemTime::now()
+        .duration_since(UNIX_EPOCH)
+        .unwrap() // SAFE: rely on fact that now() cannot return anything earlier than EPOCH
+        .as_secs()
+}
+
+fn time_str() -> String {
+    let now = OffsetDateTime::now_local().unwrap_or(OffsetDateTime::now_utc());
+    let dt = now.date();
+    let tm = now.time();
+    format!("{}-{}-{} {:02}:{:02}:{:02} Z{:02}", dt.year(), dt.month() as u8, dt.day(), tm.hour(), tm.minute(), tm.second(), now.offset().whole_hours())
+}
 
 pub fn backup<R: Read>(
     mut read_from: R,
     auth: &str, auth_every_bytes: usize, split_size_bytes: usize, out_template: &str, 
     pass: &str, compress_level: u8, buf_size_bytes: usize) -> Result<(), String>
 {
-    let hash_seed = SystemTime::now()
-        .duration_since(UNIX_EPOCH)
-        .unwrap() // SAFE: rely on fact that now() cannot return anything earlier than EPOCH
-        .as_secs();
+    let hash_seed = timestamp();
+    let start_time_str = time_str();
 
     let mut stats = Stats::new();
     stats.auth_string = String::from(auth);
@@ -76,6 +89,14 @@ pub fn backup<R: Read>(
         stats.compressed_len = Some(comp.compressed());
     }
 
+    let end_timestamp = timestamp();
+    let end_time_str = time_str();
+    let throughput_mbps = if end_timestamp - hash_seed != 0 { stats.in_data_len.unwrap() as u64 / 1024 / 1024 / (end_timestamp - hash_seed) } else { 0 };
+    stats.misc_info = Some(format!("built from {}/{}, started at {}, ended at {}, took {} seconds, througput {} MB/s", 
+        option_env!("GIT_BRANCH").unwrap_or("?"),
+        option_env!("GIT_REV").unwrap_or("?"),
+        start_time_str, end_time_str, end_timestamp - hash_seed, throughput_mbps));
+
     spl.write_metadata(&stats)
 }
 
@@ -83,6 +104,7 @@ pub fn backup<R: Read>(
 pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &str, buf_size_bytes: usize, check_free_space: &Option<&str>) -> Result<(), String> {
     let stats = read_metadata::<MultiFilesReader>(cfg_path)?;
     eprintln!("authentication string: {}", stats.auth_string);
+    eprintln!("misc info: {}", stats.misc_info.as_ref().unwrap_or(&"none".to_owned()));
 
     if let Some(mount_point) = check_free_space {
         let all_data = stats.in_data_len.unwrap(); // SAFE because if was checked in read_metadata()

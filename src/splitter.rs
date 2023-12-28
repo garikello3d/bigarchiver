@@ -39,7 +39,8 @@ impl<'a, T: MultiFilesWriterTarget> Splitter<'a, T> {
                 nr_chunks={}\n\
                 chunk_len={}\n\
                 auth={}\n\
-                auth_len={}\n",
+                auth_len={}\n\
+                misc_info={}\n",
                 stats.in_data_len.ok_or("in_data_len is missing")?,
                 stats.in_data_hash.ok_or("in_data_hash is missing")?,
                 stats.hash_seed.ok_or("hash_seed is missing")?,
@@ -47,6 +48,7 @@ impl<'a, T: MultiFilesWriterTarget> Splitter<'a, T> {
                 self.next_chunk_no,
                 stats.out_chunk_size.ok_or("out_chunk_size is missing")?,
                 stats.auth_string, stats.auth_chunk_size,
+                stats.misc_info.as_ref().unwrap_or(&String::new())
             ).as_str())
     }
 }
@@ -144,7 +146,8 @@ mod tests {
         spl.write_metadata(&Stats {
             in_data_len: Some(1), in_data_hash: Some(0x1234567812345678), 
             compressed_len: Some(2), hash_seed: Some(0x8765432187654321),
-            out_chunk_size: Some(3), out_nr_chunks: Some(4), auth_chunk_size: 5, auth_string: "auth".to_owned()
+            out_chunk_size: Some(3), out_nr_chunks: Some(4), auth_chunk_size: 5, auth_string: "auth".to_owned(),
+            misc_info: Some("XXX".to_owned())
         }).unwrap();
         let files = &files.files;
         assert_eq!(files.len(), expected.len());

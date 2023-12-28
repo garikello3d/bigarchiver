@@ -103,6 +103,7 @@ pub fn read_metadata<R: MultiFilesReaderSource>(metadata_path: &str) -> Result<S
             "chunk_len" => stats.out_chunk_size = Some(val.parse::<usize>().map_err(|_| "error reading 'chunk_len'")?),
             "auth_len" => stats.auth_chunk_size = val.parse::<usize>().map_err(|_| "error reading 'auth_len'")?,
             "auth" => stats.auth_string = val.to_string(),
+            "misc_info" => stats.misc_info = Some(val.to_string()),
             _ => return Err(format!("unknown field '{}'", param))
         }    
     }
@@ -179,7 +180,8 @@ mod tests {
             nr_chunks=1\n\
             chunk_len=2\n\
             auth=Author Name\n\
-            auth_len=3".to_vec())    
+            auth_len=3\n
+            misc_info=XXX".to_vec())    
         }
     }
 
@@ -347,7 +349,8 @@ mod tests {
                 out_nr_chunks: Some(1),
                 out_chunk_size: Some(2),
                 auth_string: "Author Name".to_owned(),
-                auth_chunk_size: 3
+                auth_chunk_size: 3,
+                misc_info: Some("XXX".to_owned())
             }
         );
     }

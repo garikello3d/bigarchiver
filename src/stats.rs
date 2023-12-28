@@ -8,6 +8,7 @@ pub struct Stats {
     pub out_chunk_size: Option<usize>,
     pub auth_string: String,
     pub auth_chunk_size: usize,
+    pub misc_info: Option<String>,
 }
 
 impl Stats {
