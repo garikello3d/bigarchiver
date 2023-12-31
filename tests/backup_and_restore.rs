@@ -56,7 +56,7 @@ fn backup_restore_all_ok(input_size: usize, auth_size: usize, split_size: usize,
         &out_tpl,
         "secret",
         9,
-        buf_size).unwrap();
+        buf_size, None).unwrap();
 
     let src_unpacked = SinkToVector{ incoming: Vec::new(), etalon: &src };
 
@@ -64,7 +64,7 @@ fn backup_restore_all_ok(input_size: usize, auth_size: usize, split_size: usize,
         Some(src_unpacked),
         &out_cfg,
         "secret",
-        buf_size, &None::<&str>).unwrap();
+        buf_size, &None::<&str>, true).unwrap();
 
 }
 
@@ -81,6 +81,6 @@ fn restore_no_free_space() {
         auth=Author Name\n\
         auth_len=3", usize::MAX);
     File::create(cfg_path).unwrap().write_all(cfg_contents.as_bytes()).unwrap();
-    let err = check(Some(SinkToVector{ incoming: Vec::new(), etalon: b"" }), cfg_path, "", 100, &Some("/tmp")).unwrap_err();
+    let err = check(Some(SinkToVector{ incoming: Vec::new(), etalon: b"" }), cfg_path, "", 100, &Some("/tmp"), true).unwrap_err();
     println!("err = {}", err);
 }

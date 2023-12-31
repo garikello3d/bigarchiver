@@ -81,5 +81,23 @@ pub enum Commands {
         /// Buffer size for reading disk files, in MB
         #[arg(long, value_name ="size_mb")]
         buf_size: usize,
+    },
+    /// Benchmark mode: read data from stdin and try different combinations of input params to see how fast the process is
+    Bench {
+        /// Path to directory to store temporary files
+        #[arg(long, value_name = "/path/to/dir")]
+        out_dir: String,
+
+        /// Limit in seconds for each try
+        #[arg(long, value_name = "seconds")]
+        duration: usize,
+
+        /// LZMA compression levels to try, comma-separated levels (0 - 9)
+        #[arg(long, value_name = "level,level,level,...", value_delimiter = ',', num_args = 1..)]
+        compress_levels: Vec<u8>,
+
+        /// Buffer sizes for reading stdin data to try, comma-separated values (in MB)
+        #[arg(long, value_name ="size,size,size,...", value_delimiter = ',', num_args = 1..)]
+        buf_sizes: Vec<usize>,
     }
 }

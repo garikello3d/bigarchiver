@@ -40,8 +40,9 @@ use free_space::get_free_space;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::Read;
 use time::OffsetDateTime;
+use std::sync::{Arc, atomic::{AtomicBool}};
 
-fn timestamp() -> u64 {
+pub fn timestamp() -> u64 {
     SystemTime::now()
         .duration_since(UNIX_EPOCH)
         .unwrap() // SAFE: rely on fact that now() cannot return anything earlier than EPOCH
@@ -58,7 +59,7 @@ fn time_str() -> String {
 pub fn backup<R: Read>(
     mut read_from: R,
     auth: &str, auth_every_bytes: usize, split_size_bytes: usize, out_template: &str, 
-    pass: &str, compress_level: u8, buf_size_bytes: usize) -> Result<(), String>
+    pass: &str, compress_level: u8, buf_size_bytes: usize, exit_flag: Option<Arc<AtomicBool>>) -> Result<usize, String>
 {
     let hash_seed = timestamp();
     let start_time_str = time_str();
@@ -79,7 +80,7 @@ pub fn backup<R: Read>(
             let mut hash_copier = DataHasher::with_writer(Some(&mut comp), hash_seed);
 
             let mut stdinbuf = BufferedReader::new(
-                &mut read_from, &mut hash_copier, buf_size_bytes / 8, buf_size_bytes);
+                &mut read_from, &mut hash_copier, buf_size_bytes / 8, buf_size_bytes, exit_flag);
 
             stdinbuf.read_and_write_all()?;
 
@@ -91,20 +92,24 @@ pub fn backup<R: Read>(
 
     let end_timestamp = timestamp();
     let end_time_str = time_str();
-    let throughput_mbps = if end_timestamp - hash_seed != 0 { stats.in_data_len.unwrap() as u64 / 1024 / 1024 / (end_timestamp - hash_seed) } else { 0 };
+    let in_len = stats.in_data_len.unwrap();
+    let throughput_mbps = if end_timestamp - hash_seed != 0 { in_len as u64 / 1024 / 1024 / (end_timestamp - hash_seed) } else { 0 };
     stats.misc_info = Some(format!("built from {}/{}, started at {}, ended at {}, took {} seconds, througput {} MB/s", 
         option_env!("GIT_BRANCH").unwrap_or("?"),
         option_env!("GIT_REV").unwrap_or("?"),
         start_time_str, end_time_str, end_timestamp - hash_seed, throughput_mbps));
 
-    spl.write_metadata(&stats)
+    spl.write_metadata(&stats)?;
+    Ok(in_len)
 }
 
     
-pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &str, buf_size_bytes: usize, check_free_space: &Option<&str>) -> Result<(), String> {
+pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &str, buf_size_bytes: usize, check_free_space: &Option<&str>, show_info: bool) -> Result<(), String> {
     let stats = read_metadata::<MultiFilesReader>(cfg_path)?;
-    eprintln!("authentication string: {}", stats.auth_string);
-    eprintln!("misc info: {}", stats.misc_info.as_ref().unwrap_or(&"none".to_owned()));
+    if show_info {
+        eprintln!("authentication string: {}", stats.auth_string);
+        eprintln!("misc info: {}", stats.misc_info.as_ref().unwrap_or(&"none".to_owned()));
+    }
 
     if let Some(mount_point) = check_free_space {
         let all_data = stats.in_data_len.unwrap(); // SAFE because if was checked in read_metadata()
