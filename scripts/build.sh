@@ -2,9 +2,32 @@
 
 set -e
 
-if [ $# -eq 0 ]; then
-    echo usage $0 --image\|--app [ os_ident ]
+function usage {
+    printf "to prepare docker build image:\n\t$0 --image [os_ident]\n"
+    printf "to build the application based on prviousely built image:\n\t$0 --app <branch> [os_ident]\n"
     exit 1
+}
+
+case $1 in 
+    --image)
+        OS=$2
+        ARGS_MAX=2
+        ;;
+    --app)
+        BRANCH=$2
+        OS=$3
+        ARGS_MAX=3
+        if [ -z $BRANCH ]; then
+            usage
+        fi
+        ;;
+    *)
+        usage
+        exit 3
+esac
+
+if [ $# -gt $ARGS_MAX ]; then
+    usage
 fi
 
 cat PLATFORMS | sed '/^#/d;/^[[:space:]]*$/d' | while read LINE; do
@@ -18,8 +41,8 @@ cat PLATFORMS | sed '/^#/d;/^[[:space:]]*$/d' | while read LINE; do
     IMAGE_FROM=${WORDS[1]}
     PAC_MGR=${WORDS[2]}
 
-    if [ -n "$2" ]; then
-        if [ x"$IDENT" != x"$2" ] ; then
+    if [ -n "$OS" ]; then
+        if [ "x$OS" != "x$IDENT" ]; then
             continue
         fi
     fi
@@ -32,11 +55,8 @@ cat PLATFORMS | sed '/^#/d;/^[[:space:]]*$/d' | while read LINE; do
             ;;
         --app)
             echo building application for $IDENT
-            docker run -v=.:/src bigarchiver-$IDENT /bin/bash -l -c "/build-internal.sh $IDENT"
+            docker run -v=.:/src bigarchiver-$IDENT /bin/bash -l -c "/build-internal.sh $IDENT $BRANCH"
             ;;
-        *)
-            echo invalid usage
-            exit 3
     esac
     cd scripts
 done
