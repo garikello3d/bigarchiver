@@ -1,5 +1,6 @@
 use std::io::Write;
 use liblzma::write::{XzEncoder, XzDecoder};
+use liblzma::stream::MtStreamBuilder;
 use crate::finalizable::DataSink;
 
 pub struct Conv<'a, T: DataSink> {
@@ -26,10 +27,16 @@ pub struct Compressor2<'a, T: DataSink> {
     enc: XzEncoder<Conv<'a, T>>
 }
 
-
 impl<'a, T: DataSink> Compressor2<'a, T> {
-    pub fn new(to: &'a mut T, level: u32) -> Compressor2<'a, T> {
-        Compressor2 { enc: XzEncoder::new(Conv{ t: to }, level) }
+    pub fn new(to: &'a mut T, level: u32, nr_threads: u32) -> Result<Compressor2<'a, T>, String> {
+        if nr_threads > 1 {
+            let mut bld = MtStreamBuilder::new();
+            bld.preset(level).threads(nr_threads);
+            let stream = bld.encoder().map_err(|e| format!("could not create multi-threaded LZMA encoder: {}", e))?;
+            Ok( Compressor2 { enc: XzEncoder::new_stream(Conv{ t: to }, stream) } )
+        } else {
+            Ok( Compressor2 { enc: XzEncoder::new(Conv{ t: to }, level) } )
+        }
     }
 
     #[allow(dead_code)]
@@ -45,7 +52,6 @@ impl<'a, T: DataSink> Compressor2<'a, T> {
 
 impl<'a, T: DataSink> DataSink for Compressor2<'a, T> {
     fn add(&mut self, data: &[u8]) -> Result<(), String> {
-        //eprintln!("Compressor: writing {} bytes", data.len());
         self.enc.write_all(data).map_err(|e| format!("write all error: {}", e))
     }
     fn finish(&mut self) -> Result<(), String> {
@@ -61,8 +67,16 @@ pub struct Decompressor2<'a, T: DataSink> {
 }
 
 impl<'a, T: DataSink> Decompressor2<'a, T> {
-    pub fn new(to: &'a mut T) -> Decompressor2<'a, T> {
-        Decompressor2 { dec: XzDecoder::new(Conv{ t: to }) }
+    pub fn new(to: &'a mut T, nr_threads: u32) -> Result<Decompressor2<'a, T>, String> {
+        if nr_threads > 1 {
+            let mut bld = MtStreamBuilder::new();
+            bld.threads(nr_threads);
+            let mut stream = bld.decoder().map_err(|e| format!("could not create multi-threaded LZMA decoder: {}", e))?;
+            stream.set_memlimit(1024 * 1024 * 1024).unwrap(); // FIXME provide some way to set compressor/decompressor limits (i.e. from cmd args)
+            Ok( Decompressor2 { dec: XzDecoder::new_stream(Conv{ t: to }, stream) } )
+        } else {
+            Ok( Decompressor2 { dec: XzDecoder::new(Conv{ t: to }) } )
+        }
     }
 
     #[allow(dead_code)]
@@ -113,14 +127,14 @@ mod tests {
     #[test]
     fn zip_unzip_small_2() {
         let mut sink_for_zipped = Sink{ data: Vec::new() };
-        let mut comp = Compressor2::new(&mut sink_for_zipped, 8);
+        let mut comp = Compressor2::new(&mut sink_for_zipped, 8, 4).unwrap();
         comp.add(b"HELLO").unwrap();
         comp.finish().unwrap();
         let data = &comp.enc.get_ref().t.data;
         eprintln!("{} bytes: {:?}", data.len(), data);
 
         let mut sink_for_unzipped = Sink{ data: Vec::new() };
-        let mut decomp = Decompressor2::new(&mut sink_for_unzipped);
+        let mut decomp = Decompressor2::new(&mut sink_for_unzipped, 4).unwrap();
         decomp.add(&data.clone()).unwrap();
         decomp.finish().unwrap();
         let orig_data = &decomp.dec.get_ref().t.data;
@@ -148,7 +162,7 @@ mod tests {
         thread_rng().fill_bytes(&mut src);
 
         let mut sink_for_zipped = Sink{ data: Vec::new() };
-        let mut comp = Compressor2::new(&mut sink_for_zipped, 9);
+        let mut comp = Compressor2::new(&mut sink_for_zipped, 9, 4).unwrap();
         //comp.add(&src).unwrap();
         add_by_random_parts(&mut comp, &src, 512);
         //eprintln!("could write {} bytes to compressor", written);
@@ -157,7 +171,7 @@ mod tests {
         eprintln!("{} bytes -> {} bytes", src.len(), data.len());
 
         let mut sink_for_unzipped = Sink{ data: Vec::new() };
-        let mut decomp = Decompressor2::new(&mut sink_for_unzipped);
+        let mut decomp = Decompressor2::new(&mut sink_for_unzipped, 4).unwrap();
         //decomp.add(&data.clone()).unwrap();
         add_by_random_parts(&mut decomp, &data.clone(), 512);
         //eprintln!("could write {} bytes to decompressor", written);
@@ -180,7 +194,7 @@ mod tests {
             buf.resize(SEND_SIZE, 0);
             let mut null_sink = NullSink{};
             let mut count = 0;
-            let mut comp = Compressor2::new(&mut null_sink, 6);
+            let mut comp = Compressor2::new(&mut null_sink, 6, 6).unwrap();
             while !is_stop_copy.load(Ordering::SeqCst) {
                 thread_rng().fill_bytes(&mut buf);
                 comp.add(&buf).unwrap();

@@ -34,9 +34,10 @@ impl DataSink for SinkToVector<'_> {
     [10, 100, 1000], // input_size
     [10, 100, 1000], // auth_size
     [10, 100, 1000], // split_size
-    [10, 100, 1000]  // buf_size
+    [10, 100, 1000],  // buf_size
+    [1, 4] // nr_threads
 )]
-fn backup_restore_all_ok(input_size: usize, auth_size: usize, split_size: usize, buf_size: usize) {
+fn backup_restore_all_ok(input_size: usize, auth_size: usize, split_size: usize, buf_size: usize, nr_threads: usize) {
     let cnt = CNT.fetch_add(1, std::sync::atomic::Ordering::SeqCst);
     let parent_dir = format!("/tmp/all_ok_{}", cnt);
     let _ = std::fs::remove_dir_all(&parent_dir);
@@ -56,6 +57,7 @@ fn backup_restore_all_ok(input_size: usize, auth_size: usize, split_size: usize,
         &out_tpl,
         "secret",
         9,
+        nr_threads,
         buf_size, None).unwrap();
 
     let src_unpacked = SinkToVector{ incoming: Vec::new(), etalon: &src };
@@ -64,6 +66,7 @@ fn backup_restore_all_ok(input_size: usize, auth_size: usize, split_size: usize,
         Some(src_unpacked),
         &out_cfg,
         "secret",
+        nr_threads,
         buf_size, &None::<&str>, true).unwrap();
 
 }
@@ -81,6 +84,6 @@ fn restore_no_free_space() {
         auth=Author Name\n\
         auth_len=3", usize::MAX);
     File::create(cfg_path).unwrap().write_all(cfg_contents.as_bytes()).unwrap();
-    let err = check(Some(SinkToVector{ incoming: Vec::new(), etalon: b"" }), cfg_path, "", 100, &Some("/tmp"), true).unwrap_err();
+    let err = check(Some(SinkToVector{ incoming: Vec::new(), etalon: b"" }), cfg_path, "", 1, 100, &Some("/tmp"), true).unwrap_err();
     println!("err = {}", err);
 }

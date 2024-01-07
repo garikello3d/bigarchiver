@@ -59,7 +59,7 @@ fn time_str() -> String {
 pub fn backup<R: Read>(
     mut read_from: R,
     auth: &str, auth_every_bytes: usize, split_size_bytes: usize, out_template: &str, 
-    pass: &str, compress_level: u8, buf_size_bytes: usize, exit_flag: Option<Arc<AtomicBool>>) -> Result<usize, String>
+    pass: &str, compress_level: u8, nr_threads: usize, buf_size_bytes: usize, exit_flag: Option<Arc<AtomicBool>>) -> Result<usize, String>
 {
     let hash_seed = timestamp();
     let start_time_str = time_str();
@@ -75,7 +75,7 @@ pub fn backup<R: Read>(
     {
         let enc = Encryptor::new(&mut spl, pass, auth);
         let mut fbuf = FixedSizeWriter::new(enc, auth_every_bytes);
-        let mut comp = Compressor2::new(&mut fbuf, compress_level as u32);
+        let mut comp = Compressor2::new(&mut fbuf, compress_level as u32, nr_threads as u32)?;
         {
             let mut hash_copier = DataHasher::with_writer(Some(&mut comp), hash_seed);
 
@@ -104,7 +104,7 @@ pub fn backup<R: Read>(
 }
 
     
-pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &str, buf_size_bytes: usize, check_free_space: &Option<&str>, show_info: bool) -> Result<(), String> {
+pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &str, nr_threads: usize, buf_size_bytes: usize, check_free_space: &Option<&str>, show_info: bool) -> Result<(), String> {
     let stats = read_metadata::<MultiFilesReader>(cfg_path)?;
     if show_info {
         eprintln!("authentication string: {}", stats.auth_string);
@@ -122,7 +122,7 @@ pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &str, b
 
     let mut hash_copier = DataHasher::with_writer(ref_write_to, stats.hash_seed.unwrap());
     {
-        let mut decomp = Decompressor2::new(&mut hash_copier);
+        let mut decomp = Decompressor2::new(&mut hash_copier, nr_threads as u32)?;
         let dec = Decryptor::new(&mut decomp, pass, &stats.auth_string);
         let mut fbuf = FixedSizeWriter::new(dec, stats.auth_chunk_size + 16);
         let fmgr = MultiFilesReader::new();

@@ -38,6 +38,10 @@ pub enum Commands {
         #[arg(long, value_name = "level")]
         compress_level: u8,
 
+        /// how many threads to use for compression; defaults the number of CPU cores if omitted
+        #[arg(long, value_name = "how_many")]
+        compress_threads: Option<usize>,
+
         /// Buffer size for reading stdin data, in MB
         #[arg(long, value_name ="size_mb")]
         buf_size: usize,
@@ -55,6 +59,10 @@ pub enum Commands {
         /// Password to decrypt data with
         #[arg(long, value_name = "password")]
         pass: String,
+
+        /// how many threads to use for decompression; defaults to the number of CPU cores if omitted
+        #[arg(long, value_name = "how_many")]
+        decompress_threads: Option<usize>,
 
         /// Buffer size for reading disk files, in MB
         #[arg(long, value_name ="size_mb")]
@@ -78,11 +86,15 @@ pub enum Commands {
         #[arg(long, value_name = "password")]
         pass: String,
 
+        /// how many threads to use for decompression; defaults to the number of CPU cores if omitted
+        #[arg(long, value_name = "how_many")]
+        decompress_threads: Option<usize>,
+
         /// Buffer size for reading disk files, in MB
         #[arg(long, value_name ="size_mb")]
         buf_size: usize,
     },
-    /// Benchmark mode: read data from stdin and try different combinations of input params to see how fast the process is
+    /// Benchmark mode: read data from stdin and try different combinations of input params to see how fast the archiving is
     Bench {
         /// Path to directory to store temporary files
         #[arg(long, value_name = "/path/to/dir")]
@@ -99,5 +111,13 @@ pub enum Commands {
         /// Buffer sizes for reading stdin data to try, comma-separated values (in MB)
         #[arg(long, value_name ="size,size,size,...", value_delimiter = ',', num_args = 1..)]
         buf_sizes: Vec<usize>,
+
+        /// Sequence of numbers of threads to use, comma-separated values
+        #[arg(long, value_name = "n,n,n,...", value_delimiter = ',', num_args = 1..)]
+        compress_threads_nums: Vec<usize>,
     }
+}
+
+pub fn nr_threads_from_arg(opt_nr: &Option<usize>) -> Result<usize, String> {
+    Ok(opt_nr.unwrap_or(std::thread::available_parallelism().map_err(|_| "could not get number of processor cores")?.get()))
 }
