@@ -10,31 +10,42 @@ Finally, additional assurance is maintained since the integrity of resulting fil
 
 #### Example to backup data coming from stdin into files
 
-`tar cf - /my/disk | ./bigarchiver --backup --buf-size 256 --auth "My Full Name" --auth-every 32 --pass mysecret --compress-level 6 --split-size 1024 --out-template /path/to/files%%%%%%`
+`tar cf - /my/disk | ./bigarchiver backup --buf-size 256 --auth "My Full Name" --auth-every 32 --pass mysecret --compress-level 6 --split-size 1024 --out-template /path/to/files%%%%%%`
 
 #### Example to restore data from files to stdout:
 
-`./bigarchiver --restore --check-free-space /my --buf-size 256 --pass mysecret --config /path/to/files000000.cfg | tar xf - /my/disk`
+`./bigarchiver restore --check-free-space /my --buf-size 256 --pass mysecret --config /path/to/files000000.cfg | tar xf - /my/disk`
 
 #### Example to verify the backup files without actual restore:
 
-`./bigarchiver --check --buf-size 256 --pass mysecret --config /path/to/files000000.cfg`
+`./bigarchiver check --buf-size 256 --pass mysecret --config /path/to/files000000.cfg`
+
+#### Example brenchmark different settings and see the performance
+
+`dd if=/dev/urandom bs=1M | ./bigarchiver bench --out-dir /tmp/test --duration 60 --compress-levels 1,3,5,7,9 --buf-sizes 4,32 --compress-threads-nums 1,2,4`
 
 ## Command line option reference
 
 | Option                                                   | Meaning |
 |----------------------------------------------------------|---------|
-| `--backup, --restore, --check` | select mode of operation (only one at a time) |
-| `--buf-size <size_MB>` | buffer size to use when reading or writing (see _Memory usage_ section below for details) |
-| `--pass <password>` | password for encryption or decryption<br/>**WARNING:** it's impossible to restore the archive if password is lost! |
-| `--auth <auth_string>` | any arbitrary public authentication string that will be embedded into to archive; can be someone's name or passport ID, or company name; it's not kept in secret, but an attacker won't be able to impersonate this string |
-| `--auth-every <size_MB>` | how frequent to insert the authentication string; any reasonable value around dozens/hundreds of megabytes is ok |
-| `--compress-level <level>` | set XZ compression preset, valid values are from 0 to 9 (see _Memory usage_ section below for details); set to 6 if unsure |
-| `--split-size <size_MB>` | output chunk size to split to |
-| `--out-template <template>` | full path how to name output files; any sequence of '%' characters will accept sequence number; if no '%' sequence is found, or it appears more than once, the error will be returned |
-| `--config <config>` | full path to config file left from a previous successful backup operation |
-| `--check-free-space <path>` | check free space available on the indicated filesystem before restore |
-| `--no-check` | for backup mode, don't do integrity check _after_ backup creation; for restore mode, don't do integrity check _before_ restoring |
+| `backup, restore, check, bench` | select mode of operation (only one at a time) |
+| `--auth-every <size_mb>` | Embed authentication data to each portion of data of indicated size, in MB |
+| `--auth <string>` | Public authentication data to embed |
+| `--buf-size <size_mb>` | Buffer size for reading disk files or stdin, in MB |
+| `--buf-sizes <size,size,size,...>` | Buffer sizes for reading stdin data to try, comma-separated values (in MB), for benchmarking |
+| `--check-free-space <mountpoint_or_path>` | Check free space available on the indicated filesystem before restore |
+| `--compress-level <level>` | LZMA compression level, 0 - 9 |
+| `--compress-levels <level,level,level,...>` | LZMA compression levels to try, comma-separated levels (0 - 9), for benchmarking |
+| `--compress-threads <how_many>` | How many threads to use for compression; defaults to the number of CPU cores if omitted |
+| `--compress-threads-nums <n,n,n,...>` | Sequence of numbers of threads to use, comma-separated values, for benchmarking |
+| `--config <full_path>` | Full path to config file of the archive to restore |
+| `--decompress-threads <how_many>` | How many threads to use for decompression; defaults to the number of CPU cores if omitted |
+| `--duration <seconds>` | Limit in seconds for each try, for benchmarking |
+| `--no-check` | Do not check the integrity of the whole archive after backup (for backup mode) or before actual restore is done (for restore mode) is done; the default is to always check |
+| `--out-dir </path/to/dir>` | Path to directory to store temporary files, for benchmarking |
+| `--out-template <path_with_%>` | Template for output chunks; '%' symbols will transform into a sequence number |
+| `--pass <password>` | Password to encrypt/decrypt data with |
+| `--split-size <size_mb>` | Size of output chunks, in MB |
 
 ## Memory usage
 
@@ -87,9 +98,6 @@ A: password-based key derivation function PBKDF2-HMAC-SHA256 is used with 100k i
 
 * select encryption algorithm and key size, or even turn off the encryption (for the sake of speed)
 * proper cleanup after interrupted/failed backup
-* record time spent and throughput (I normally know when I _start_ my backups, but when the process is actually finished is not always obvious)
-* add benchmark mode, so that one can select best compression and encryption settings on exact hardware
-* multi-threaded compression/decompression
 
 ## Disclaimer
 

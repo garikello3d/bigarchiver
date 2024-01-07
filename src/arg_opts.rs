@@ -38,7 +38,7 @@ pub enum Commands {
         #[arg(long, value_name = "level")]
         compress_level: u8,
 
-        /// how many threads to use for compression; defaults the number of CPU cores if omitted
+        /// How many threads to use for compression; defaults to the number of CPU cores if omitted
         #[arg(long, value_name = "how_many")]
         compress_threads: Option<usize>,
 
@@ -60,7 +60,7 @@ pub enum Commands {
         #[arg(long, value_name = "password")]
         pass: String,
 
-        /// how many threads to use for decompression; defaults to the number of CPU cores if omitted
+        /// How many threads to use for decompression; defaults to the number of CPU cores if omitted
         #[arg(long, value_name = "how_many")]
         decompress_threads: Option<usize>,
 
