@@ -1,5 +1,4 @@
 use crate::finalizable::DataSink;
-use crate::stats::Stats;
 use crate::file_set::FileSet;
 
 pub trait MultiFilesReaderSource {
@@ -82,43 +81,10 @@ impl <'a, T: DataSink, R: MultiFilesReaderSource> Joiner<'a, T, R> {
     }
 }
 
-pub fn read_metadata<R: MultiFilesReaderSource>(metadata_path: &str) -> Result<Stats, String> {
-    let mut stats = Stats::new();
-    let s = String::from_utf8(
-        R::read_single_file(metadata_path)?)
-        .map_err(|e|format!("metadata file doesn't contain valid utf8 data: {}", e))?;
-    for line in s.split("\n").map(|ln| ln.trim()).filter(|ln| ln.len() > 0) {
-        let param_val = line.split("=").collect::<Vec<&str>>();
-        if param_val.len() != 2 {
-            return Err(format!("invalid metadata line: '{}'", line));
-        }
-        let param = param_val[0].trim();
-        let val = param_val[1].trim();
-        match param {
-            "in_len" => stats.in_data_len = Some(val.parse::<usize>().map_err(|_| "error reading 'in_len'")?),
-            "in_hash" => stats.in_data_hash = Some(u64::from_str_radix(val, 16).map_err(|_| "error reading 'in_hash'")?),
-            "hash_seed" => stats.hash_seed = Some(u64::from_str_radix(val, 16).map_err(|_| "error reading 'hash_seed'")?),
-            "xz_len" => stats.compressed_len = Some(val.parse::<usize>().map_err(|_| "error reading 'xz_len'")?),
-            "nr_chunks" => stats.out_nr_chunks = Some(val.parse::<usize>().map_err(|_| "error reading 'nr_chunks'")?),
-            "chunk_len" => stats.out_chunk_size = Some(val.parse::<usize>().map_err(|_| "error reading 'chunk_len'")?),
-            "auth_len" => stats.auth_chunk_size = val.parse::<usize>().map_err(|_| "error reading 'auth_len'")?,
-            "auth" => stats.auth_string = val.to_string(),
-            "misc_info" => stats.misc_info = Some(val.to_string()),
-            _ => return Err(format!("unknown field '{}'", param))
-        }    
-    }
-    if stats.all_set() {
-        Ok(stats)
-    } else {
-        Err("not all metadata fields are provided".to_owned())
-    }
-}
-
 #[cfg(test)]
 mod tests {
     use std::collections::{BTreeMap, HashSet};
-    use crate::{joiner::{Joiner, MultiFilesReaderSource, read_metadata}, finalizable::DataSink};
-    use crate::stats::Stats;
+    use crate::{joiner::{Joiner, MultiFilesReaderSource}, finalizable::DataSink};
     use rand::{thread_rng, Rng, RngCore};
 
     #[derive(Debug)]
@@ -172,16 +138,7 @@ mod tests {
         }
 
         fn read_single_file(_: &str) -> Result<Vec<u8>, String> {
-            Ok(b"\
-            in_len=12345\n\
-            in_hash=abcde\n\
-            hash_seed=edcba\n\
-            xz_len=54321\n\
-            nr_chunks=1\n\
-            chunk_len=2\n\
-            auth=Author Name\n\
-            auth_len=3\n
-            misc_info=XXX".to_vec())    
+            unimplemented!()
         }
     }
 
@@ -337,21 +294,4 @@ mod tests {
         }
     }
 
-    #[test]
-    fn read_meta() {
-        assert_eq!(
-            read_metadata::<TestReaderSource>("").unwrap(),
-            Stats {
-                in_data_len: Some(12345),
-                in_data_hash: Some(0xabcde),
-                hash_seed: Some(0xedcba),
-                compressed_len: Some(54321),
-                out_nr_chunks: Some(1),
-                out_chunk_size: Some(2),
-                auth_string: "Author Name".to_owned(),
-                auth_chunk_size: 3,
-                misc_info: Some("XXX".to_owned())
-            }
-        );
-    }
 }

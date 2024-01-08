@@ -14,7 +14,7 @@ mod fixed_size_writer;
 use fixed_size_writer::FixedSizeWriter;
 
 mod joiner;
-use joiner::{Joiner,read_metadata};
+use joiner::Joiner;
 
 mod multi_files_reader;
 use multi_files_reader::MultiFilesReader;
@@ -41,6 +41,7 @@ use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::Read;
 use time::OffsetDateTime;
 use std::sync::{Arc, atomic::AtomicBool};
+use std::fs::File;
 
 pub fn timestamp() -> u64 {
     SystemTime::now()
@@ -67,8 +68,8 @@ pub fn backup<R: Read>(
     let mut stats = Stats::new();
     stats.auth_string = String::from(auth);
     stats.auth_chunk_size = auth_every_bytes;
-    stats.out_chunk_size = Some(split_size_bytes);
-    stats.hash_seed = Some(hash_seed);
+    stats.out_chunk_size = split_size_bytes;
+    stats.hash_seed = hash_seed;
 
     let mut fmgr = MultiFilesWriter::new();
     let mut spl: Splitter<'_, MultiFilesWriter> = Splitter::from_pattern(&mut fmgr, split_size_bytes, out_template)?;
@@ -84,43 +85,43 @@ pub fn backup<R: Read>(
 
             stdinbuf.read_and_write_all()?;
 
-            stats.in_data_len = Some(hash_copier.counter());
-            stats.in_data_hash = Some(hash_copier.result());
+            stats.in_data_len = hash_copier.counter();
+            stats.in_data_hash = hash_copier.result();
         }
-        stats.compressed_len = Some(comp.compressed());
+        stats.compressed_len = comp.compressed();
     }
 
     let end_timestamp = timestamp();
     let end_time_str = time_str();
-    let in_len = stats.in_data_len.unwrap();
-    let throughput_mbps = if end_timestamp - hash_seed != 0 { in_len as u64 / 1024 / 1024 / (end_timestamp - hash_seed) } else { 0 };
+    let throughput_mbps = if end_timestamp - hash_seed != 0 { stats.in_data_len as u64 / 1024 / 1024 / (end_timestamp - hash_seed) } else { 0 };
     stats.misc_info = Some(format!("built from {}/{}, started at {}, ended at {}, took {} seconds, througput {} MB/s", 
         option_env!("GIT_BRANCH").unwrap_or("?"),
         option_env!("GIT_REV").unwrap_or("?"),
         start_time_str, end_time_str, end_timestamp - hash_seed, throughput_mbps));
 
     spl.write_metadata(&stats)?;
-    Ok(in_len)
+    Ok(stats.in_data_len)
 }
 
     
 pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &str, nr_threads: usize, buf_size_bytes: usize, check_free_space: &Option<&str>, show_info: bool) -> Result<(), String> {
-    let stats = read_metadata::<MultiFilesReader>(cfg_path)?;
+    let stats = Stats::from_readable(File::open(cfg_path)
+        .map_err(|e| format!("could not open metadata file '{}': {}", cfg_path, e))?)?;
+
     if show_info {
         eprintln!("authentication string: {}", stats.auth_string);
         eprintln!("misc info: {}", stats.misc_info.as_ref().unwrap_or(&"none".to_owned()));
     }
 
     if let Some(mount_point) = check_free_space {
-        let all_data = stats.in_data_len.unwrap(); // SAFE because if was checked in read_metadata()
-        if get_free_space(mount_point)? < all_data {
-            return Err(format!("filesystem of '{}' won't fit {} of data to restore", mount_point, all_data));
+        if get_free_space(mount_point)? < stats.in_data_len {
+            return Err(format!("filesystem of '{}' won't fit {} bytes of data to restore", mount_point, stats.in_data_len));
         }
     }
 
     let ref_write_to = write_to.as_mut();
 
-    let mut hash_copier = DataHasher::with_writer(ref_write_to, stats.hash_seed.unwrap());
+    let mut hash_copier = DataHasher::with_writer(ref_write_to, stats.hash_seed);
     {
         let mut decomp = Decompressor2::new(&mut hash_copier, nr_threads as u32)?;
         let dec = Decryptor::new(&mut decomp, pass, &stats.auth_string);
@@ -133,7 +134,7 @@ pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &str, n
         joiner.read_and_write_all()?;
     }
 
-    if hash_copier.result() != stats.in_data_hash.unwrap() { // SAFE: read_metadata checked that all is set
+    if hash_copier.result() != stats.in_data_hash {
         Err("hash verification error".to_owned())
     } else {
         Ok(())

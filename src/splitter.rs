@@ -31,25 +31,7 @@ impl<'a, T: MultiFilesWriterTarget> Splitter<'a, T> {
     pub fn write_metadata(self, stats: &Stats) -> Result<(), String> {
         self.files_target.write_single_file(
             self.file_set.cfg_path().as_str(),
-            format!("\
-                in_len={}\n\
-                in_hash={:016x}\n\
-                hash_seed={:016x}\n\
-                xz_len={}\n\
-                nr_chunks={}\n\
-                chunk_len={}\n\
-                auth={}\n\
-                auth_len={}\n\
-                misc_info={}\n",
-                stats.in_data_len.ok_or("in_data_len is missing")?,
-                stats.in_data_hash.ok_or("in_data_hash is missing")?,
-                stats.hash_seed.ok_or("hash_seed is missing")?,
-                stats.compressed_len.ok_or("compressed_len is missing")?,
-                self.next_chunk_no,
-                stats.out_chunk_size.ok_or("out_chunk_size is missing")?,
-                stats.auth_string, stats.auth_chunk_size,
-                stats.misc_info.as_ref().unwrap_or(&String::new())
-            ).as_str())
+            &stats.as_string())
     }
 }
 
@@ -144,9 +126,9 @@ mod tests {
         spl.add(data2.as_slice()).unwrap();
         spl.finish().unwrap();
         spl.write_metadata(&Stats {
-            in_data_len: Some(1), in_data_hash: Some(0x1234567812345678), 
-            compressed_len: Some(2), hash_seed: Some(0x8765432187654321),
-            out_chunk_size: Some(3), out_nr_chunks: Some(4), auth_chunk_size: 5, auth_string: "auth".to_owned(),
+            in_data_len: 1, in_data_hash: 0x1234567812345678, 
+            compressed_len: 2, hash_seed: 0x8765432187654321,
+            out_chunk_size: 3, out_nr_chunks: 4, auth_chunk_size: 5, auth_string: "auth".to_owned(),
             misc_info: Some("XXX".to_owned())
         }).unwrap();
         let files = &files.files;
