@@ -29,14 +29,17 @@ impl Stats {
             .map_err(|e|format!("cannot read metadata: {}", e))?;
 
         for line in s.split("\n").map(|ln| ln.trim()).filter(|ln| ln.len() > 0) {
-            let param_val = line.split("=").collect::<Vec<&str>>();
-            if param_val.len() != 2 {
-                return Err(format!("invalid metadata line: '{}'", line));
+            let delim_pos = line.find('=').ok_or(format!("invalid metadata line: '{}'", line))?;
+            if delim_pos == 0 {
+                return Err(format!("empty param name in metadata: '{}'", line));
             }
-            let param = param_val[0].trim();
-            let val = param_val[1].trim();
+            if delim_pos == line.len() - 1 {
+                return Err(format!("empty name value in metadata: '{}'", line));
+            }
+            let param = &line[.. delim_pos];
+            let val = &line[delim_pos + 1 ..];            
             if !map.insert(param, val).is_none() {
-                return Err(format!("duplicate key '{}'", param));
+                return Err(format!("duplicate key: '{}'", param));
             }
         }
 
@@ -107,7 +110,7 @@ mod tests {
                 chunk_len=2\n\
                 auth=Author Name\n\
                 auth_len=3\n
-                misc_info=XXX".as_bytes().to_vec().as_slice()).unwrap(),
+                misc_info=ABC=1, XYZ=2".as_bytes().to_vec().as_slice()).unwrap(),
             Stats {
                 in_data_len: 12345,
                 in_data_hash: 0xabcde,
@@ -117,7 +120,7 @@ mod tests {
                 out_chunk_size: 2,
                 auth_string: "Author Name".to_owned(),
                 auth_chunk_size: 3,
-                misc_info: Some("XXX".to_owned())
+                misc_info: Some("ABC=1, XYZ=2".to_owned())
             }
         );
     }

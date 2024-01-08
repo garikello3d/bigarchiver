@@ -54,7 +54,7 @@ fn time_str() -> String {
     let now = OffsetDateTime::now_local().unwrap_or(OffsetDateTime::now_utc());
     let dt = now.date();
     let tm = now.time();
-    format!("{}-{}-{} {:02}:{:02}:{:02} Z{:02}", dt.year(), dt.month() as u8, dt.day(), tm.hour(), tm.minute(), tm.second(), now.offset().whole_hours())
+    format!("{}-{:02}-{:02} {:02}:{:02}:{:02} Z{:02}", dt.year(), dt.month() as u8, dt.day(), tm.hour(), tm.minute(), tm.second(), now.offset().whole_hours())
 }
 
 pub fn backup<R: Read>(
@@ -94,7 +94,7 @@ pub fn backup<R: Read>(
     let end_timestamp = timestamp();
     let end_time_str = time_str();
     let throughput_mbps = if end_timestamp - hash_seed != 0 { stats.in_data_len as u64 / 1024 / 1024 / (end_timestamp - hash_seed) } else { 0 };
-    stats.misc_info = Some(format!("built from {}/{}, started at {}, ended at {}, took {} seconds, througput {} MB/s", 
+    stats.misc_info = Some(format!("revision={}/{}, started={}, ended={}, took={}s, througput={}MB/s", 
         option_env!("GIT_BRANCH").unwrap_or("?"),
         option_env!("GIT_REV").unwrap_or("?"),
         start_time_str, end_time_str, end_timestamp - hash_seed, throughput_mbps));
