@@ -59,7 +59,7 @@ impl<'a, R: Read, T: DataSink> BufferedReader<'a, R, T> {
 #[cfg(test)]
 mod tests {
     use std::io::Read;
-    use std::sync::{Arc, atomic::{AtomicBool}};
+    use std::sync::{Arc, atomic::AtomicBool};
     use std::thread;
     use rand::{thread_rng, Rng, RngCore};
     use crate::finalizable::DataSink;

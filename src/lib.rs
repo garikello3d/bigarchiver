@@ -40,7 +40,7 @@ use free_space::get_free_space;
 use std::time::{SystemTime, UNIX_EPOCH};
 use std::io::Read;
 use time::OffsetDateTime;
-use std::sync::{Arc, atomic::{AtomicBool}};
+use std::sync::{Arc, atomic::AtomicBool};
 
 pub fn timestamp() -> u64 {
     SystemTime::now()
