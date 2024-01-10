@@ -3,7 +3,7 @@ use clap::{Parser, Subcommand};
 #[derive(Parser)]
 #[command(name = "bigarchiver")]
 #[command(author = "Igor Bezzubchenko")]
-#[command(version = "0.0.1")]
+#[command(version = option_env!("VERSION").unwrap_or("?"))]
 #[command(about = "Reliably backup/restore data with compression and encryption", long_about = None)]
 pub struct ArgOpts {
     #[command(subcommand)]

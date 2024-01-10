@@ -94,9 +94,8 @@ pub fn backup<R: Read>(
     let end_timestamp = timestamp();
     let end_time_str = time_str();
     let throughput_mbps = if end_timestamp - hash_seed != 0 { stats.in_data_len as u64 / 1024 / 1024 / (end_timestamp - hash_seed) } else { 0 };
-    stats.misc_info = Some(format!("revision={}/{}, started={}, ended={}, took={}s, througput={}MB/s", 
-        option_env!("GIT_BRANCH").unwrap_or("?"),
-        option_env!("GIT_REV").unwrap_or("?"),
+    stats.misc_info = Some(format!("version={}, started={}, ended={}, took={}s, througput={}MB/s", 
+        option_env!("VERSION").unwrap_or("?"),
         start_time_str, end_time_str, end_timestamp - hash_seed, throughput_mbps));
 
     spl.write_metadata(&stats)?;

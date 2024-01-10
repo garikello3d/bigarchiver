@@ -1,13 +1,12 @@
 use std::process::Command;
 
+fn git_cmd_val(args: Vec<&str>) -> String {
+    let out = Command::new("git").args(args).output().unwrap();
+    String::from_utf8(out.stdout).unwrap().trim().to_owned()
+}
+
 fn main() {
-    for (export_env, git_args) in [
-        ("GIT_REV",     &["rev-parse", "--short", "HEAD"]),
-        ("GIT_BRANCH",  &["branch", "--quiet", "--show-current"])
-    ]
-    {
-        let out = Command::new("git").args(git_args).output().unwrap();
-        let out_str = String::from_utf8(out.stdout).unwrap();
-        println!("cargo:rustc-env={}={}", export_env, out_str);
-    }
+    println!("cargo:rustc-env=VERSION=0.0.2/{}/{}", 
+        git_cmd_val(vec!["rev-parse", "--short", "HEAD"]),
+        git_cmd_val(vec!["branch", "--quiet", "--show-current"]));
 }
