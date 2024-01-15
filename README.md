@@ -94,6 +94,21 @@ Q: how is the encryption key produced from the string password given?
 
 A: password-based key derivation function PBKDF2-HMAC-SHA256 is used with 100k iterations
 
+## Building for different platforms other than your development host
+
+Sometimes it's needed to quickly check if the binary compiles and passess all tests for some platform, other than the workstation where you cloned repo. Not to mention the binary itself that may not even run on your workstation. In the `build` directory there are scripts to help. They rely on the fact that your platform of interest is either clonable as _docker_ image (linuxes) **or** accessible remotely via _ssh_ (bsd, solaris, aix, ...). Currently a couple of Linuxes and FreeBSD are supported/tested, but you can easily add your own.
+
+Specifically, the steps are:
+
+- change into `scripts` folder
+- copy `PLATFORMS.example` to `PLATFORMS`
+- review what's inside this file, make necessary changes (e.g. for non-container targets you have to provide a valid hostname/IP)
+- run something like `./build.sh --image rocky9`: it will download and build an image with the toolchain
+- suppose you made some local changes and want to test them on Rocky Linux before committing anything. In this case you run `./build.sh --app rocky9`: it will grab the local source code, upload it to the spawned container, and build the code + run all the tests
+- resulting binary will appear under `build/rocky9` in your main working directory on the host machine
+
+**Note:** running `./build.sh --image`  or `./build.sh --app` (i.e. without specifying the platform identifier) will prepare images or build the app for all platforms listed in `PLATFORMS` file.
+
 ## TODO/plans
 
 * select encryption algorithm and key size, or even turn off the encryption (for the sake of speed)

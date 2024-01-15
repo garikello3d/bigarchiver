@@ -13,4 +13,11 @@ Cargo.lock
 # MSVC Windows builds of rustc generate these, which store debugging information
 *.pdb
 
+# binaries produced by build.sh
 scripts/build
+
+# generated file to preserve revision number (for -V) if git is not available
+.VERSION
+
+# local file usually copied from PLATFORMS.example and tailored for specific environment of interest
+scripts/PLATFORMS

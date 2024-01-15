@@ -1,4 +1,0 @@
-# short name    # docker from       # pac mgr cmd
-centos7         centos:7.9.2009     yum
-rocky9          rockylinux:9.3      yum
-debian12        debian:12.4         apt-get

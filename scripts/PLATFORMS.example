@@ -1,0 +1,7 @@
+# please copy this file to PLATFROMS and modify for your needs what you want to build
+
+# short name     # from                         # pac update cmd                 # pac install cmd
+centos7      |   docker/centos:7.9.2009     |   yum -y update               |   yum -y install
+rocky9       |   docker/rockylinux:9.3      |   yum -y update               |   yum -y --allowerasing install
+debian12     |   docker/debian:12.4         |   apt-get -y update           |   apt-get -y install
+freebsd13    |   remote/YOUR_SERVER_HOST    |   sudo pkg update             |   sudo pkg install
