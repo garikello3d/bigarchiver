@@ -111,7 +111,6 @@ Specifically, the steps are:
 
 ## TODO/plans
 
-* select encryption algorithm and key size, or even turn off the encryption (for the sake of speed)
 * proper cleanup after interrupted/failed backup
 
 ## Disclaimer
