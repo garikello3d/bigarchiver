@@ -10,6 +10,7 @@ pub struct Stats {
     pub compressed_len: usize,
     pub out_nr_chunks: usize,
     pub out_chunk_size: usize,
+    pub alg: String,
     pub auth_string: String,
     pub auth_chunk_size: usize,
     pub misc_info: Option<String>,
@@ -33,9 +34,6 @@ impl Stats {
             if delim_pos == 0 {
                 return Err(format!("empty param name in metadata: '{}'", line));
             }
-            if delim_pos == line.len() - 1 {
-                return Err(format!("empty name value in metadata: '{}'", line));
-            }
             let param = &line[.. delim_pos];
             let val = &line[delim_pos + 1 ..];            
             if !map.insert(param, val).is_none() {
@@ -50,6 +48,7 @@ impl Stats {
                 compressed_len: Self::get_and_parse::<_, _>(&map, "xz_len", |v| { v.parse::<usize>() })?,
                 out_nr_chunks: Self::get_and_parse::<_, _>(&map, "nr_chunks", |v| { v.parse::<usize>() })?,
                 out_chunk_size: Self::get_and_parse::<_, _>(&map, "chunk_len", |v| { v.parse::<usize>() })?,
+                alg: Self::get(&map, "alg")?.to_owned(),
                 auth_chunk_size: Self::get_and_parse::<_, _>(&map, "auth_len", |v| { v.parse::<usize>() })?,
                 auth_string: Self::get(&map, "auth")?.to_owned(),
                 misc_info: map.get("misc_info").map(|s| s.to_string())
@@ -64,6 +63,7 @@ impl Stats {
                 xz_len={}\n\
                 nr_chunks={}\n\
                 chunk_len={}\n\
+                alg={}\n\
                 auth={}\n\
                 auth_len={}\n\
                 misc_info={}\n",
@@ -73,6 +73,7 @@ impl Stats {
                 self.compressed_len,
                 self.out_nr_chunks,
                 self.out_chunk_size,
+                self.alg,
                 self.auth_string, 
                 self.auth_chunk_size,
                 self.misc_info.as_ref().unwrap_or(&String::new()))
@@ -108,6 +109,7 @@ mod tests {
                 xz_len=54321\n\
                 nr_chunks=1\n\
                 chunk_len=2\n\
+                alg=aes128-gcm\n\
                 auth=Author Name\n\
                 auth_len=3\n
                 misc_info=ABC=1, XYZ=2".as_bytes().to_vec().as_slice()).unwrap(),
@@ -118,6 +120,7 @@ mod tests {
                 compressed_len: 54321,
                 out_nr_chunks: 1,
                 out_chunk_size: 2,
+                alg: "aes128-gcm".to_owned(),
                 auth_string: "Author Name".to_owned(),
                 auth_chunk_size: 3,
                 misc_info: Some("ABC=1, XYZ=2".to_owned())

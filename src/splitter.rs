@@ -128,7 +128,8 @@ mod tests {
         spl.write_metadata(&Stats {
             in_data_len: 1, in_data_hash: 0x1234567812345678, 
             compressed_len: 2, hash_seed: 0x8765432187654321,
-            out_chunk_size: 3, out_nr_chunks: 4, auth_chunk_size: 5, auth_string: "auth".to_owned(),
+            out_chunk_size: 3, out_nr_chunks: 4, 
+            alg: "some_alg".to_owned(), auth_chunk_size: 5, auth_string: "auth".to_owned(),
             misc_info: Some("XXX".to_owned())
         }).unwrap();
         let files = &files.files;

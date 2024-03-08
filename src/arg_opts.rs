@@ -18,17 +18,21 @@ pub enum Commands {
         #[arg(long, value_name = "path_with_%")]
         out_template: String,
 
-        /// Password to encrypt data with
+        /// Encryption & authentication algorithm
+        #[arg(long, value_name = "algorithm")]
+        alg: Alg,
+
+        /// Password to encrypt data with (if algorithm is not none)
         #[arg(long, value_name = "password")]
-        pass: String,
+        pass: Option<String>,
 
-        /// Public authentication data to embed
+        /// Public authentication data to embed (if algorithm is not none)
         #[arg(long, value_name = "string")]
-        auth: String,
+        auth: Option<String>,
 
-        /// Embed authentication data to each portion of data of indicated size, in MB
+        /// Embed authentication data to each portion of data of indicated size, in MB (if algorithm is not none)
         #[arg(long, value_name = "size_mb")]
-        auth_every: usize,
+        auth_every: Option<usize>,
 
         /// Size of output chunks, in MB
         #[arg(long, value_name = "size_mb")]
@@ -56,9 +60,9 @@ pub enum Commands {
         #[arg(long, value_name = "full_path")]
         config: String,
 
-        /// Password to decrypt data with
+        /// Password to decrypt data with (only if the archive was created with encryption)
         #[arg(long, value_name = "password")]
-        pass: String,
+        pass: Option<String>,
 
         /// How many threads to use for decompression; defaults to the number of CPU cores if omitted
         #[arg(long, value_name = "how_many")]
@@ -82,9 +86,9 @@ pub enum Commands {
         #[arg(long, value_name = "full_path")]
         config: String,
 
-        /// Password to decrypt data with
+        /// Password to decrypt data with (only if the archive was created with encryption)
         #[arg(long, value_name = "password")]
-        pass: String,
+        pass: Option<String>,
 
         /// how many threads to use for decompression; defaults to the number of CPU cores if omitted
         #[arg(long, value_name = "how_many")]
@@ -115,7 +119,18 @@ pub enum Commands {
         /// Sequence of numbers of threads to use, comma-separated values
         #[arg(long, value_name = "n,n,n,...", value_delimiter = ',', num_args = 1..)]
         compress_threads_nums: Vec<usize>,
+
+        /// Encryption types, comma-separated values
+        #[arg(long, value_name = "algs,...", value_delimiter = ',', num_args = 1..)]
+        algs: Vec<Alg>
     }
+}
+
+#[derive(clap::ValueEnum, Default, Clone, PartialEq, Debug)]
+pub enum Alg {
+    None,
+    #[default]
+    Aes128Gcm,
 }
 
 pub fn nr_threads_from_arg(opt_nr: &Option<usize>) -> Result<usize, String> {

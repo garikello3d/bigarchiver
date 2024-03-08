@@ -1,7 +1,8 @@
 #[cfg(test)]
 
-use bigarchiver::{backup,check};
+use bigarchiver::{backup, check, EncParams};
 use bigarchiver::finalizable::DataSink;
+use bigarchiver::arg_opts::Alg;
 
 mod common;
 
@@ -51,11 +52,14 @@ fn backup_restore_all_ok(input_size: usize, auth_size: usize, split_size: usize,
 
     backup(
         &src[..],
-        "The Author",
-        auth_size,
+        &Some(EncParams{
+            alg: Alg::Aes128Gcm,
+            auth_msg: "The Author".to_owned(),
+            auth_every_bytes: auth_size,
+            pass: "secret".to_owned()
+        }),
         split_size,
         &out_tpl,
-        "secret",
         9,
         nr_threads,
         buf_size, None).unwrap();
@@ -65,7 +69,7 @@ fn backup_restore_all_ok(input_size: usize, auth_size: usize, split_size: usize,
     check(
         Some(src_unpacked),
         &out_cfg,
-        "secret",
+        &Some("secret".to_owned()),
         nr_threads,
         buf_size, &None::<&str>, true).unwrap();
 
@@ -84,6 +88,6 @@ fn restore_no_free_space() {
         auth=Author Name\n\
         auth_len=3", usize::MAX);
     File::create(cfg_path).unwrap().write_all(cfg_contents.as_bytes()).unwrap();
-    let err = check(Some(SinkToVector{ incoming: Vec::new(), etalon: b"" }), cfg_path, "", 1, 100, &Some("/tmp"), true).unwrap_err();
+    let err = check(Some(SinkToVector{ incoming: Vec::new(), etalon: b"" }), cfg_path, &Some("".to_owned()), 1, 100, &Some("/tmp"), true).unwrap_err();
     println!("err = {}", err);
 }
