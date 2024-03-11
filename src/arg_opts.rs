@@ -131,6 +131,7 @@ pub enum Alg {
     None,
     #[default]
     Aes128Gcm,
+    Chacha20Poly1305
 }
 
 pub fn nr_threads_from_arg(opt_nr: &Option<usize>) -> Result<usize, String> {

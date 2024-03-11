@@ -4,10 +4,10 @@ set -e
 
 RUN='cargo run --release --'
 
-ALGS=(aes128-gcm none)
-BACKUP_PARAMS=("--pass Pass --auth Auth --auth-every 1" "")
-CHECK_PARAMS=("--pass Pass" "")
-RESTORE_PARAMS=("--pass Pass" "")
+ALGS=(aes128-gcm chacha20-poly1305 none)
+BACKUP_PARAMS=("--pass Pass --auth Auth --auth-every 1" "--pass Pass --auth Auth --auth-every 1" "")
+CHECK_PARAMS=("--pass Pass" "--pass Pass" "")
+RESTORE_PARAMS=("--pass Pass" "--pass Pass" "")
 
 for i in ${!ALGS[@]}; do
     OUT_DIR=$(mktemp -d /tmp/bigarc.test.XXXXXX)

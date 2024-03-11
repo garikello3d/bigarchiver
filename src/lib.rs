@@ -5,7 +5,7 @@ pub mod finalizable;
 use finalizable::DataSink;
 
 mod enc_dec;
-use enc_dec::{Encryptor, Decryptor};
+use enc_dec::{Encryptor, Decryptor, EncDecAlg};
 
 mod comp_decomp_2;
 use comp_decomp_2::{Compressor2, Decompressor2};
@@ -75,19 +75,21 @@ pub fn backup<R: Read>(
     let start_time_str = time_str();
 
     let mut stats = Stats::new();
+    let enc_alg;
 
-    (stats.alg, stats.auth_string, stats.auth_chunk_size) = match opt_enc {
+    ((enc_alg, stats.alg), stats.auth_string, stats.auth_chunk_size) = match opt_enc {
         Some(enc) => (
             match enc.alg {
                 Alg::None => {
                     return Err("some encryption parameter is provided for non-encrypting mode".to_owned());
                 },
-                Alg::Aes128Gcm => "aes128-gcm".to_owned()
+                Alg::Aes128Gcm => (Some(EncDecAlg::Aes128Gcm), "aes128-gcm".to_owned()),
+                Alg::Chacha20Poly1305 => (Some(EncDecAlg::Chacha20Poly1305), "chacha20-poly1305".to_owned()),
             }, 
             enc.auth_msg.clone(), 
             enc.auth_every_bytes
         ),
-        None => ("none".to_owned(), String::new(), 0)
+        None => ((None, "none".to_owned()), String::new(), 0)
     };
 
     stats.out_chunk_size = split_size_bytes;
@@ -97,7 +99,7 @@ pub fn backup<R: Read>(
     let mut spl: Splitter<'_, MultiFilesWriter> = Splitter::from_pattern(&mut fmgr, split_size_bytes, out_template)?;
 
     if let Some(enc_params) = opt_enc {
-        let enc = Encryptor::new(&mut spl, &enc_params.pass, &enc_params.auth_msg);
+        let enc = Encryptor::new(&mut spl, &enc_alg.as_ref().unwrap(),&enc_params.pass, &enc_params.auth_msg);
         let mut fbuf = FixedSizeWriter::new(enc, enc_params.auth_every_bytes);
         let mut comp = Compressor2::new(&mut fbuf, compress_level as u32, nr_threads as u32)?;
         {
@@ -150,13 +152,19 @@ pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &Option
             if pass.is_some() {
                 return Err("restore of an unencrypted archive does not need a password".to_owned());
             }
-            Alg::None
+            None
         },
         "aes128-gcm" => {            
             if pass.is_none() {
                 return Err("restore of an encrypted archive requires a password".to_owned());
             }
-            Alg::Aes128Gcm
+            Some(EncDecAlg::Aes128Gcm)
+        },
+        "chacha20-poly1305" => {            
+            if pass.is_none() {
+                return Err("restore of an encrypted archive requires a password".to_owned());
+            }
+            Some(EncDecAlg::Chacha20Poly1305)
         },
         x => {
             return Err(format!("invalid encryption type in metadata: {}", x));
@@ -178,11 +186,10 @@ pub fn check<W: DataSink>(mut write_to: Option<W>, cfg_path: &str, pass: &Option
 
     let mut hash_copier = DataHasher::with_writer(ref_write_to, stats.hash_seed);
     {
-        if alg != Alg::None {
-            assert!(alg == Alg::Aes128Gcm); // TODO remove when more ciphes are added
+        if alg.is_some() {
             let mut decomp = Decompressor2::new(&mut hash_copier, nr_threads as u32)?;
-            let dec = Decryptor::new(&mut decomp, pass.as_ref().unwrap(), &stats.auth_string);
-            let mut fbuf = FixedSizeWriter::new(dec, stats.auth_chunk_size + 16);
+            let (dec, tag_size) = Decryptor::new(&mut decomp, &alg.as_ref().unwrap(), pass.as_ref().unwrap(), &stats.auth_string);
+            let mut fbuf = FixedSizeWriter::new(dec, stats.auth_chunk_size + tag_size);
             let fmgr = MultiFilesReader::new();
 
             let mut joiner = Joiner::from_metadata(

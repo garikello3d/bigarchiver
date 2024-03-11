@@ -1,5 +1,5 @@
 use ring::error::Unspecified;
-use ring::aead::AES_128_GCM;
+use ring::aead::{AES_128_GCM, CHACHA20_POLY1305};
 use ring::aead::UnboundKey;
 use ring::aead::BoundKey;
 use ring::aead::SealingKey;
@@ -12,13 +12,22 @@ use ring::pbkdf2;
 use std::num::NonZeroU32;
 use crate::finalizable::DataSink;
 
-fn create_unbound_key(pass_str: &str) -> UnboundKey {
-    let mut key: Vec<u8> = vec![0; AES_128_GCM.key_len()];
+pub enum EncDecAlg {
+    Aes128Gcm,
+    Chacha20Poly1305
+}
+
+fn create_unbound_key(alg: &EncDecAlg, pass_str: &str) -> (UnboundKey, usize) {
+    let a = match alg {
+        EncDecAlg::Aes128Gcm => &AES_128_GCM,
+        EncDecAlg::Chacha20Poly1305 => &CHACHA20_POLY1305
+    };
+    let mut key: Vec<u8> = vec![0; a.key_len()];
     let nr_iters = NonZeroU32::new(100000).unwrap();
     pbkdf2::derive(pbkdf2::PBKDF2_HMAC_SHA256, nr_iters, &[],pass_str.as_bytes(), &mut key);
 
-    // SAFE because algorithm is hardcoded, it cannot come from a user
-    UnboundKey::new(&AES_128_GCM, &key).unwrap()
+    // SAFE because algorithm is chosen explicitly, it cannot come from a user
+    (UnboundKey::new(a, &key).unwrap(), a.tag_len())
 }
 
 pub struct Encryptor<'a, T: DataSink> {
@@ -28,11 +37,11 @@ pub struct Encryptor<'a, T: DataSink> {
 }
 
 impl<'a, T: DataSink> Encryptor<'a, T> {
-    pub fn new(to: &'a mut T, pass_str: &str, aad_str: &str) -> Encryptor<'a, T> {
+    pub fn new(to: &'a mut T, alg: &'a EncDecAlg, pass_str: &str, aad_str: &str) -> Encryptor<'a, T> {
         Encryptor { 
             write_to: to, 
-            sealing_key: SealingKey::new( create_unbound_key(pass_str), NonceFromCounter{ cnt: 0 }),
-            assoc_data: Aad::from(aad_str.to_owned())
+            sealing_key: SealingKey::new(create_unbound_key(alg, pass_str).0, NonceFromCounter{ cnt: 0 }),
+            assoc_data: Aad::from(aad_str.to_owned()),
         }
     }
 }
@@ -60,12 +69,16 @@ pub struct Decryptor<'a, T: DataSink> {
 }
 
 impl<'a, T: DataSink> Decryptor<'a, T> {
-    pub fn new(to: &'a mut T, pass_str: &str, aad_str: &str) -> Decryptor<'a, T> {
-        Decryptor { 
-            write_to: to, 
-            opening_key: OpeningKey::new( create_unbound_key(pass_str), NonceFromCounter{ cnt: 0 }),
-            assoc_data: Aad::from(aad_str.to_owned())
-        }
+    pub fn new(to: &'a mut T, alg: &'a EncDecAlg, pass_str: &str, aad_str: &str) -> (Decryptor<'a, T>, usize) {
+        let (key, tag_len) = create_unbound_key(alg, pass_str);
+        (
+            Decryptor { 
+                write_to: to, 
+                opening_key: OpeningKey::new(key , NonceFromCounter{ cnt: 0 }),
+                assoc_data: Aad::from(aad_str.to_owned()),
+            },
+            tag_len
+        )
     }
 }
 
@@ -142,11 +155,16 @@ mod tests {
 
     #[test]
     fn encrypt_decrypt_once_good() {
+        encrypt_decrypt_once_good_with_alg(&EncDecAlg::Aes128Gcm);
+        encrypt_decrypt_once_good_with_alg(&EncDecAlg::Chacha20Poly1305);
+    }
+
+    fn encrypt_decrypt_once_good_with_alg(alg: &EncDecAlg) {
         let mut cipher = CipherReceiver(Vec::new());
-        let mut enc = Encryptor::<CipherReceiver>::new(&mut cipher, "password", "data11111111");
+        let mut enc = Encryptor::<CipherReceiver>::new(&mut cipher, alg, "password", "data11111111");
 
         let mut text = PlaintextReceiver(String::new());
-        let mut dec = Decryptor::<PlaintextReceiver>::new(&mut text, "password", "data11111111");
+        let mut dec = Decryptor::<PlaintextReceiver>::new(&mut text, alg, "password", "data11111111").0;
 
         enc.add(b"AAAAAAAAAA").unwrap();
         //enc.write(b"BBB").unwrap();
