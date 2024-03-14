@@ -10,7 +10,7 @@ Finally, additional assurance is maintained since the integrity of resulting fil
 
 #### Example to backup data coming from stdin into files
 
-`tar cf - /my/disk | ./bigarchiver backup --buf-size 256 --auth "My Full Name" --auth-every 32 --pass mysecret --compress-level 6 --split-size 1024 --out-template /path/to/files%%%%%%`
+`tar cf - /my/disk | ./bigarchiver backup --buf-size 256 --alg aes128-gcm --auth "My Full Name" --auth-every 32 --pass mysecret --compress-level 6 --split-size 1024 --out-template /path/to/files%%%%%%`
 
 #### Example to restore data from files to stdout:
 
@@ -22,13 +22,14 @@ Finally, additional assurance is maintained since the integrity of resulting fil
 
 #### Example brenchmark different settings and see the performance
 
-`dd if=/dev/urandom bs=1M | ./bigarchiver bench --out-dir /tmp/test --duration 60 --compress-levels 1,3,5,7,9 --buf-sizes 4,32 --compress-threads-nums 1,2,4`
+`dd if=/dev/urandom bs=1M | ./bigarchiver bench --out-dir /tmp/test --duration 60 --compress-levels 1,3,5,7,9 --buf-sizes 4,32 --compress-threads-nums 1,2,4 --algs none,aes128-gcm`
 
 ## Command line option reference
 
 | Option                                                   | Meaning |
 |----------------------------------------------------------|---------|
 | `backup, restore, check, bench` | select mode of operation (only one at a time) |
+| `--alg <alg>` | Encryption & authentication algorithm; possible values: none, aes128-gcm, chacha20-poly1305 |
 | `--auth-every <size_mb>` | Embed authentication data to each portion of data of indicated size, in MB |
 | `--auth <string>` | Public authentication data to embed |
 | `--buf-size <size_mb>` | Buffer size for reading disk files or stdin, in MB |
